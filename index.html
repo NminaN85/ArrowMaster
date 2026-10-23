@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Arrow Puzzle - Prototpye</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            color: #333;
+        }
+        .game-card {
+            background: white;
+            padding: 24px;
+            border-radius: 20px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            text-align: center;
+            max-width: 360px;
+            width: 90%;
+        }
+        .header {
+            margin-bottom: 20px;
+        }
+        .header h1 {
+            font-size: 22px;
+            color: #1e3a8a;
+            margin-bottom: 6px;
+        }
+        .header p {
+            font-size: 13px;
+            color: #6b7280;
+        }
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(4, 65px);
+            grid-template-rows: repeat(4, 65px);
+            gap: 10px;
+            justify-content: center;
+            margin: 20px 0;
+        }
+        .cell {
+            background: #f1f5f9;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 26px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            user-select: none;
+        }
+        .cell:hover {
+            background: #e2e8f0;
+            transform: scale(1.05);
+        }
+        .cell.active {
+            background: #3b82f6;
+            color: white;
+            border-color: #2563eb;
+        }
+        .btn-reset {
+            background: #1e3a8a;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 12px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 15px;
+            width: 100%;
+            transition: background 0.2s;
+            box-shadow: 0 4px 12px rgba(30, 58, 138, 0.2);
+        }
+        .btn-reset:hover {
+            background: #1d4ed8;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="game-card">
+        <div class="header">
+            <h1>Arrow Puzzle</h1>
+            <p>اضغط على الأسهم لتوجيهها وإخلاء الشبكة!</p>
+        </div>
+        
+        <!-- شبكة اللعبة -->
+        <div class="grid" id="gameGrid"></div>
+        
+        <button class="btn-reset" onclick="resetGame()">إعادة اللعبة 🔄</button>
+    </div>
+
+    <script>
+        // مصفوفة تمثل الأسهم
+        let board = [
+            '➡️', '⬇️', '⬅️', '⬆️',
+            '⬆️', '➡️', '⬇️', '⬅️',
+            '⬅️', '⬆️', '➡️', '⬇️',
+            '⬇️', '⬅️', '⬆️', '➡️'
+        ];
+
+        const gridElement = document.getElementById('gameGrid');
+
+        function renderBoard() {
+            gridElement.innerHTML = '';
+            board.forEach((arrow, index) => {
+                const cell = document.createElement('div');
+                cell.classList.add('cell');
+                cell.innerHTML = arrow ? arrow : '';
+                cell.onclick = () => handleCellClick(index);
+                gridElement.appendChild(cell);
+            });
+        }
+
+        function handleCellClick(index) {
+            if (!board[index]) return;
+            
+            // تأثير تفاعلي بسيط عند الضغط
+            const cells = gridElement.children;
+            cells[index].style.transform = 'scale(0.9)';
+            setTimeout(() => {
+                cells[index].style.transform = 'scale(1)';
+            }, 150);
+            
+            // لاحقاً سنضيف منطق حركة السهم الحقيقي وخروجه من الشبكة
+        }
+
+        function resetGame() {
+            renderBoard();
+        }
+
+        // تشغيل اللعبة
+        renderBoard();
+    </script>
+
+</body>
+</html>
