@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Arrow Puzzle - Prototpye</title>
+    <title>Arrow Puzzle - Full Version</title>
     <style>
         * {
             box-sizing: border-box;
@@ -12,66 +12,96 @@
         }
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            background: linear-gradient(135deg, #1e1b4b 0%, #312e81 100%);
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
             min-height: 100vh;
-            color: #333;
+            color: #fff;
         }
         .game-card {
-            background: white;
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
             padding: 24px;
-            border-radius: 20px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            border-radius: 24px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
             text-align: center;
-            max-width: 360px;
+            max-width: 380px;
             width: 90%;
         }
         .header {
             margin-bottom: 20px;
         }
         .header h1 {
-            font-size: 22px;
-            color: #1e3a8a;
+            font-size: 24px;
+            color: #818cf8;
             margin-bottom: 6px;
         }
         .header p {
             font-size: 13px;
-            color: #6b7280;
+            color: #94a3b8;
+        }
+        .stats {
+            display: flex;
+            justify-content: space-around;
+            margin-bottom: 15px;
+            font-size: 14px;
+            font-weight: bold;
+            color: #e2e8f0;
         }
         .grid {
             display: grid;
-            grid-template-columns: repeat(4, 65px);
-            grid-template-rows: repeat(4, 65px);
+            grid-template-columns: repeat(4, 70px);
+            grid-template-rows: repeat(4, 70px);
             gap: 10px;
             justify-content: center;
             margin: 20px 0;
         }
         .cell {
-            background: #f1f5f9;
-            border: 2px solid #e2e8f0;
-            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.08);
+            border: 2px solid rgba(255, 255, 255, 0.15);
+            border-radius: 14px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 26px;
+            font-size: 28px;
             cursor: pointer;
             transition: all 0.2s ease;
             user-select: none;
         }
-        .cell:hover {
-            background: #e2e8f0;
+        .cell:hover:not(.empty) {
+            background: rgba(129, 140, 248, 0.2);
             transform: scale(1.05);
+            border-color: #818cf8;
         }
-        .cell.active {
-            background: #3b82f6;
-            color: white;
-            border-color: #2563eb;
+        .cell.empty {
+            background: transparent;
+            border: 2px dashed rgba(255, 255, 255, 0.05);
+            cursor: default;
         }
-        .btn-reset {
-            background: #1e3a8a;
+        /* حركة الاهتزاز عند الاصطدام أو وجود عائق */
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-6px); }
+            75% { transform: translateX(6px); }
+        }
+        .shake {
+            animation: shake 0.3s ease-in-out;
+            border-color: #ef4444 !important;
+            background: rgba(239, 68, 68, 0.2) !important;
+        }
+        /* حركة الطيران للخارج */
+        @keyframes flyOut {
+            0% { transform: scale(1); opacity: 1; }
+            100% { transform: scale(1.5); opacity: 0; }
+        }
+        .fly {
+            animation: flyOut 0.3s ease-out forwards;
+        }
+        .btn {
+            background: #4f46e5;
             color: white;
             border: none;
             padding: 12px 24px;
@@ -81,10 +111,17 @@
             font-size: 15px;
             width: 100%;
             transition: background 0.2s;
-            box-shadow: 0 4px 12px rgba(30, 58, 138, 0.2);
+            box-shadow: 0 4px 12px rgba(79, 70, 229, 0.4);
         }
-        .btn-reset:hover {
-            background: #1d4ed8;
+        .btn:hover {
+            background: #4338ca;
+        }
+        .win-message {
+            margin-top: 15px;
+            font-size: 18px;
+            color: #34d399;
+            font-weight: bold;
+            display: none;
         }
     </style>
 </head>
@@ -93,56 +130,123 @@
     <div class="game-card">
         <div class="header">
             <h1>Arrow Puzzle</h1>
-            <p>اضغط على الأسهم لتوجيهها وإخلاء الشبكة!</p>
+            <p>فرّغ الأسهم التي طريقها سالك أولاً!</p>
         </div>
         
-        <!-- شبكة اللعبة -->
+        <div class="stats">
+            <div>المستوى: <span id="levelNum">1</span></div>
+            <div>الأسهم المتبقية: <span id="remainingCount">16</span></div>
+        </div>
+        
+        <!-- شبكة اللعبة 4x4 -->
         <div class="grid" id="gameGrid"></div>
         
-        <button class="btn-reset" onclick="resetGame()">إعادة اللعبة 🔄</button>
+        <div class="win-message" id="winMsg">🎉 ممتاز! تم اجتياز المستوى بنجاح!</div>
+        
+        <button class="btn" onclick="initGame()">إعادة اللعبة 🔄</button>
     </div>
 
     <script>
-        // مصفوفة تمثل الأسهم
-        let board = [
-            '➡️', '⬇️', '⬅️', '⬆️',
-            '⬆️', '➡️', '⬇️', '⬅️',
-            '⬅️', '⬆️', '➡️', '⬇️',
-            '⬇️', '⬅️', '⬆️', '➡️'
-        ];
+        const gridSize = 4; // شبكة 4 في 4
+        let board = [];
+
+        // اتجاهات الأسهم: الرمز والـ Delta (dx, dy)
+        const arrowTypes = {
+            '⬆️': { dx: 0, dy: -1 },
+            '⬇️': { dx: 0, dy: 1 },
+            '⬅️': { dx: -1, dy: 0 },
+            '➡️': { dx: 1, dy: 0 }
+        };
+
+        const symbols = ['⬆️', '⬇️', '⬅️', '➡️'];
+
+        function initGame() {
+            // توليد شبكة عشوائية مبدئية
+            board = [];
+            for (let r = 0; r < gridSize; r++) {
+                let row = [];
+                for (let c = 0; c < gridSize; c++) {
+                    const randomSymbol = symbols[Math.floor(Math.random() * symbols.length)];
+                    row.push(randomSymbol);
+                }
+                board.push(row);
+            }
+            
+            document.getElementById('winMsg').style.display = 'none';
+            renderBoard();
+        }
 
         const gridElement = document.getElementById('gameGrid');
 
         function renderBoard() {
             gridElement.innerHTML = '';
-            board.forEach((arrow, index) => {
-                const cell = document.createElement('div');
-                cell.classList.add('cell');
-                cell.innerHTML = arrow ? arrow : '';
-                cell.onclick = () => handleCellClick(index);
-                gridElement.appendChild(cell);
-            });
+            let activeCount = 0;
+
+            for (let r = 0; r < gridSize; r++) {
+                for (let c = 0; c < gridSize; c++) {
+                    const cellDiv = document.createElement('div');
+                    cellDiv.classList.add('cell');
+                    
+                    const arrow = board[r][c];
+                    if (arrow) {
+                        cellDiv.innerHTML = arrow;
+                        cellDiv.onclick = () => handleCellClick(r, c);
+                        activeCount++;
+                    } else {
+                        cellDiv.classList.add('empty');
+                    }
+                    gridElement.appendChild(cellDiv);
+                }
+            }
+
+            document.getElementById('remainingCount').innerText = activeCount;
+
+            // لو خلصت كل الأسهم
+            if (activeCount === 0) {
+                document.getElementById('winMsg').style.display = 'block';
+            }
         }
 
-        function handleCellClick(index) {
-            if (!board[index]) return;
-            
-            // تأثير تفاعلي بسيط عند الضغط
-            const cells = gridElement.children;
-            cells[index].style.transform = 'scale(0.9)';
-            setTimeout(() => {
-                cells[index].style.transform = 'scale(1)';
-            }, 150);
-            
-            // لاحقاً سنضيف منطق حركة السهم الحقيقي وخروجه من الشبكة
+        function handleCellClick(r, c) {
+            const arrow = board[r][c];
+            if (!arrow) return;
+
+            const { dx, dy } = arrowTypes[arrow];
+            let currR = r + dy;
+            let currC = c + dx;
+            let isPathClear = true;
+
+            // فحص المسار خطوة بخطوة لحد ما يخرج بره الشبكة
+            while (currR >= 0 && currR < gridSize && currC >= 0 && currC < gridSize) {
+                if (board[currR][currC] !== null) {
+                    isPathClear = false;
+                    break;
+                }
+                currR += dy;
+                currC += dx;
+            }
+
+            const cellIndex = r * gridSize + c;
+            const cellElement = gridElement.children[cellIndex];
+
+            if (isPathClear) {
+                // الطريق سالك: مسح السهم وتحريكه للخارج
+                cellElement.classList.add('fly');
+                setTimeout(() => {
+                    board[r][c] = null;
+                    renderBoard();
+                }, 300);
+            } else {
+                // الطريق مسدود: اهتزاز السهم
+                cellElement.classList.add('shake');
+                setTimeout(() => {
+                    cellElement.classList.remove('shake');
+                }, 300);
+            }
         }
 
-        function resetGame() {
-            renderBoard();
-        }
-
-        // تشغيل اللعبة
-        renderBoard();
+        // بدء اللعبة لأول مرة
+        initGame();
     </script>
 
 </body>
