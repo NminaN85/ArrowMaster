@@ -1,31 +1,21 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Arrow Master - Unravel The Labyrinth</title>
+    <title>Meowdoku - Cat Queens Puzzle</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Font Awesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Inter Font from Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&display=swap" rel="stylesheet">
     <script>
         tailwind.config = {
-            darkMode: 'class',
             theme: {
                 extend: {
-                    colors: {
-                        brand: {
-                            dark: '#0B1120',
-                            card: '#151F32',
-                            accent: '#F59E0B',
-                            accentHover: '#D97706',
-                            blue: '#3B82F6',
-                        }
-                    },
                     fontFamily: {
-                        sans: ['Inter', 'sans-serif'],
+                        fredoka: ['Fredoka', 'sans-serif'],
                     }
                 }
             }
@@ -33,352 +23,105 @@
     </script>
     <style>
         body {
-            font-family: 'Inter', sans-serif;
+            font-family: 'Fredoka', sans-serif;
             user-select: none;
             -webkit-user-select: none;
             touch-action: manipulation;
         }
 
-        /* Wiggle animation for blocked arrows */
-        @keyframes wiggle {
-            0%, 100% { transform: translate(0, 0); }
-            20% { transform: translate(-4px, 2px) rotate(-3deg); }
-            40% { transform: translate(4px, -2px) rotate(3deg); }
-            60% { transform: translate(-3px, -1px) rotate(-2deg); }
-            80% { transform: translate(3px, 1px) rotate(2deg); }
+        /* أنيميشن عند وضع القطة */
+        @keyframes popIn {
+            0% { transform: scale(0); opacity: 0; }
+            80% { transform: scale(1.2); }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        .animate-pop {
+            animation: popIn 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
         }
 
-        .animate-wiggle {
-            animation: wiggle 0.4s ease-in-out;
+        /* أنيميشن الاهتزاز عند تعارض القواعد */
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            20%, 60% { transform: translateX(-4px); }
+            40%, 80% { transform: translateX(4px); }
         }
-
-        /* Pulse hint animation */
-        @keyframes hintPulse {
-            0%, 100% { filter: drop-shadow(0 0 2px rgba(245, 158, 11, 0.6)); }
-            50% { filter: drop-shadow(0 0 12px rgba(245, 158, 11, 1)); transform: scale(1.08); }
-        }
-
-        .animate-hint {
-            animation: hintPulse 1.2s infinite ease-in-out;
-            z-index: 20;
-        }
-
-        /* Smooth slide scrollbars */
-        ::-webkit-scrollbar {
-            width: 6px;
-            height: 6px;
-        }
-        ::-webkit-scrollbar-track {
-            background: transparent;
-        }
-        ::-webkit-scrollbar-thumb {
-            background: rgba(100, 116, 139, 0.4);
-            border-radius: 4px;
+        .animate-shake {
+            animation: shake 0.3s ease-in-out;
         }
     </style>
 </head>
-<body class="dark bg-[#0B1120] dark:bg-[#0B1120] light:bg-slate-100 text-slate-100 dark:text-slate-100 light:text-slate-800 min-h-screen flex flex-col items-center justify-between overflow-x-hidden transition-colors duration-300 select-none">
+<body class="bg-slate-900 text-slate-100 min-h-screen flex flex-col items-center justify-between p-4 selection:bg-rose-500 selection:text-white">
 
-    <!-- TOP HEADER / NAVBAR -->
-    <header class="w-full max-w-md px-4 py-3 flex items-center justify-between z-10 bg-slate-900/90 dark:bg-[#0B1120]/90 light:bg-white/90 backdrop-blur border-b border-slate-800/60 dark:border-slate-800/60 light:border-slate-200 sticky top-0 transition-colors">
+    <!-- الشريط العلوي HEADER -->
+    <header class="w-full max-w-md flex items-center justify-between py-2 border-b border-slate-800">
         <div class="flex items-center gap-2">
-            <div class="flex items-center bg-slate-800/80 dark:bg-slate-800/80 light:bg-slate-100 px-2.5 py-1 rounded-full text-xs font-bold text-amber-500 border border-slate-700/50 light:border-slate-300">
-                <i class="fa-solid fa-coins mr-1.5 text-amber-500"></i>
-                <span id="coin-count">300</span>
-            </div>
-            <div class="flex items-center bg-slate-800/80 dark:bg-slate-800/80 light:bg-slate-100 px-2.5 py-1 rounded-full text-xs font-bold text-yellow-500 border border-slate-700/50 light:border-slate-300">
-                <i class="fa-solid fa-star mr-1.5"></i>
-                <span id="star-count">0</span>
-            </div>
+            <span class="text-2xl">🐱</span>
+            <h1 class="text-2xl font-bold tracking-wide text-transparent bg-clip-text bg-gradient-to-r from-pink-400 via-rose-400 to-amber-400">
+                MEOWDOKU
+            </h1>
         </div>
-
-        <h1 class="text-base font-extrabold tracking-wide text-transparent bg-clip-text bg-gradient-to-r from-amber-400 via-orange-400 to-amber-500">
-            ARROW MASTER
-        </h1>
-
-        <div class="flex items-center gap-1.5">
-            <button id="sound-btn" onclick="toggleSound()" class="w-8 h-8 rounded-full bg-slate-800/80 dark:bg-slate-800/80 light:bg-slate-200 hover:opacity-80 flex items-center justify-center text-slate-300 dark:text-slate-300 light:text-slate-700 transition text-sm">
-                <i class="fa-solid fa-music text-amber-400"></i>
+        <div class="flex items-center gap-2">
+            <button onclick="toggleSound()" id="sound-btn" class="w-9 h-9 rounded-full bg-slate-800 hover:bg-slate-700 flex items-center justify-center text-rose-400 transition">
+                <i class="fa-solid fa-volume-high"></i>
             </button>
-            <button id="theme-toggle-btn" onclick="toggleTheme()" class="w-8 h-8 rounded-full bg-slate-800/80 dark:bg-slate-800/80 light:bg-slate-200 hover:opacity-80 flex items-center justify-center text-slate-300 dark:text-slate-300 light:text-slate-700 transition text-sm">
-                <i id="theme-icon" class="fa-solid fa-sun text-amber-400"></i>
+            <button onclick="resetBoard()" class="w-9 h-9 rounded-full bg-slate-800 hover:bg-slate-700 flex items-center justify-center text-amber-400 transition" title="إعادة المحاولة">
+                <i class="fa-solid fa-rotate-right"></i>
             </button>
         </div>
     </header>
 
-    <!-- MAIN CONTAINER (SWAPPABLE VIEWS) -->
-    <main class="w-full max-w-md flex-1 flex flex-col justify-center px-4 py-2 relative">
+    <!-- المحتوى الرئيسي MAIN -->
+    <main class="w-full max-w-md flex-1 flex flex-col items-center justify-center gap-4 my-auto py-2">
 
-        <!-- VIEW 1: HOME MENU -->
-        <div id="view-home" class="flex flex-col gap-4 my-auto py-4">
-            <!-- App Card Banner -->
-            <div class="bg-gradient-to-br from-slate-900 to-slate-800/90 dark:from-slate-900 dark:to-slate-800/90 light:from-white light:to-slate-100 border border-slate-700/60 dark:border-slate-700/60 light:border-slate-300 rounded-2xl p-4 shadow-xl relative overflow-hidden flex items-center gap-4">
-                <div class="w-16 h-16 rounded-2xl bg-gradient-to-tr from-amber-500 to-orange-400 flex items-center justify-center shadow-lg shadow-amber-500/20 shrink-0">
-                    <i class="fa-solid fa-route text-3xl text-slate-950"></i>
-                </div>
-                <div>
-                    <h2 class="text-lg font-black dark:text-white light:text-slate-900">ARROW MASTER</h2>
-                    <p class="text-xs dark:text-slate-400 light:text-slate-600 mt-0.5">Unravel The Labyrinth • 10,000 Levels</p>
-                    <div class="flex gap-2 mt-2">
-                        <span class="text-[10px] bg-amber-500/10 text-amber-500 border border-amber-500/20 px-2 py-0.5 rounded-full font-semibold">Deep Mazes</span>
-                        <span class="text-[10px] bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 px-2 py-0.5 rounded-full font-semibold">100% Solvable</span>
-                    </div>
-                </div>
+        <!-- شريط الإحصائيات والمعلومات -->
+        <div class="w-full bg-slate-800/80 border border-slate-700/60 rounded-2xl p-3 flex items-center justify-between shadow-lg">
+            <div>
+                <span class="text-xs text-slate-400 font-semibold block">المستوى</span>
+                <span id="level-title" class="text-lg font-bold text-amber-400">Level 1 (5x5)</span>
             </div>
-
-            <!-- Current Puzzle Play Box -->
-            <div class="bg-slate-900/90 dark:bg-slate-900/90 light:bg-white border border-slate-800 dark:border-slate-800 light:border-slate-200 rounded-2xl p-5 shadow-lg flex flex-col gap-3">
-                <div class="flex justify-between items-center">
-                    <div>
-                        <span class="text-xs uppercase tracking-wider dark:text-slate-400 light:text-slate-500 font-bold block">Current Puzzle</span>
-                        <h3 id="home-level-title" class="text-xl font-black dark:text-white light:text-slate-900">Level 1</h3>
-                    </div>
-                    <span id="home-shape-badge" class="bg-rose-500/10 border border-rose-500/30 text-rose-500 text-xs px-3 py-1.5 rounded-full font-bold flex items-center gap-1.5">
-                        ❤️ Heart Silhouette
-                    </span>
-                </div>
-
-                <div class="w-full bg-slate-800 dark:bg-slate-800 light:bg-slate-200 rounded-full h-2 overflow-hidden mt-1">
-                    <div id="home-progress-bar" class="bg-gradient-to-r from-amber-500 to-orange-400 h-full w-0 transition-all duration-500"></div>
-                </div>
-
-                <button onclick="startLevel(currentLevelIndex)" class="w-full mt-2 py-3.5 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-slate-950 font-black text-lg rounded-xl shadow-lg shadow-amber-500/25 transition active:scale-[0.98] flex items-center justify-center gap-2">
-                    <i class="fa-solid fa-play"></i>
-                    PLAY LEVEL
-                </button>
-            </div>
-
-            <!-- Grid Action Cards (Level Map & Daily Challenge) -->
-            <div class="grid grid-cols-2 gap-3">
-                <button onclick="switchView('map')" class="bg-slate-900/80 dark:bg-slate-900/80 light:bg-white border border-slate-800 dark:border-slate-800 light:border-slate-200 hover:border-slate-700 p-4 rounded-2xl text-left flex items-center gap-3 transition group shadow-sm">
-                    <div class="w-11 h-11 rounded-xl bg-slate-800 dark:bg-slate-800 light:bg-slate-100 group-hover:bg-amber-500/20 group-hover:text-amber-500 dark:text-slate-300 light:text-slate-700 flex items-center justify-center text-lg transition shrink-0">
-                        <i class="fa-solid fa-border-all"></i>
-                    </div>
-                    <div>
-                        <h4 class="text-sm font-bold dark:text-white light:text-slate-900">Level Map</h4>
-                        <p class="text-[11px] dark:text-slate-400 light:text-slate-500 mt-0.5">10,000 Levels</p>
-                    </div>
-                </button>
-
-                <button onclick="switchView('daily')" class="bg-slate-900/80 dark:bg-slate-900/80 light:bg-white border border-slate-800 dark:border-slate-800 light:border-slate-200 hover:border-slate-700 p-4 rounded-2xl text-left flex items-center gap-3 transition group shadow-sm">
-                    <div class="w-11 h-11 rounded-xl bg-slate-800 dark:bg-slate-800 light:bg-slate-100 group-hover:bg-amber-500/20 group-hover:text-amber-500 dark:text-slate-300 light:text-slate-700 flex items-center justify-center text-lg transition shrink-0">
-                        <i class="fa-solid fa-calendar-day"></i>
-                    </div>
-                    <div>
-                        <h4 class="text-sm font-bold dark:text-white light:text-slate-900">Daily Challenge</h4>
-                        <p class="text-[11px] text-amber-500 font-bold mt-0.5">+250 Coins</p>
-                    </div>
-                </button>
-            </div>
-
-            <!-- Stats Bar -->
-            <div class="bg-slate-900/60 dark:bg-slate-900/60 light:bg-white border border-slate-800/80 dark:border-slate-800/80 light:border-slate-200 rounded-2xl p-3.5 grid grid-cols-4 divide-x divide-slate-800 dark:divide-slate-800 light:divide-slate-200 text-center shadow-sm">
-                <div>
-                    <p id="stat-solved" class="text-base font-black text-amber-500">0</p>
-                    <p class="text-[10px] dark:text-slate-400 light:text-slate-500 font-semibold mt-0.5">Solved</p>
-                </div>
-                <div>
-                    <p id="stat-stars" class="text-base font-black text-amber-500">0</p>
-                    <p class="text-[10px] dark:text-slate-400 light:text-slate-500 font-semibold mt-0.5">Stars</p>
-                </div>
-                <div>
-                    <p id="stat-cleared-arrows" class="text-base font-black text-amber-500">0</p>
-                    <p class="text-[10px] dark:text-slate-400 light:text-slate-500 font-semibold mt-0.5">Untangled</p>
-                </div>
-                <div>
-                    <p id="stat-coins" class="text-base font-black text-amber-500">300</p>
-                    <p class="text-[10px] dark:text-slate-400 light:text-slate-500 font-semibold mt-0.5">Coins</p>
-                </div>
+            <div class="flex gap-1.5" id="cat-counter">
+                <!-- يتم توليد أيقونات القطط المطلوبة هنا -->
             </div>
         </div>
 
-        <!-- VIEW 2: PUZZLE GAME PLAY -->
-        <div id="view-game" class="hidden flex-col gap-3 py-2 my-auto">
-            <!-- Game Level Sub-Header -->
-            <div class="flex items-center justify-between">
-                <button onclick="switchView('home')" class="w-9 h-9 rounded-full bg-slate-800/80 dark:bg-slate-800/80 light:bg-slate-200 hover:opacity-80 flex items-center justify-center dark:text-slate-300 light:text-slate-700">
-                    <i class="fa-solid fa-arrow-left"></i>
-                </button>
-                <div class="text-center">
-                    <h2 id="game-level-num" class="text-lg font-black dark:text-white light:text-slate-900">Level 1</h2>
-                    <p id="game-shape-name" class="text-xs text-amber-500 font-bold">❤️ Heart Silhouette</p>
-                </div>
-                <div class="w-9"></div>
-            </div>
-
-            <!-- Hearts / Stats Strip -->
-            <div class="flex items-center justify-between bg-slate-900/90 dark:bg-slate-900/90 light:bg-white border border-slate-800/90 dark:border-slate-800/90 light:border-slate-200 px-3.5 py-2 rounded-xl text-xs shadow-sm">
-                <!-- Moves counter -->
-                <div class="flex items-center gap-1.5 bg-slate-800/60 dark:bg-slate-800/60 light:bg-slate-100 px-2.5 py-1 rounded-lg">
-                    <i class="fa-solid fa-location-arrow text-blue-500"></i>
-                    <span id="moves-left" class="font-black dark:text-slate-200 light:text-slate-800">35</span>
-                </div>
-
-                <!-- Hearts Lives -->
-                <div id="hearts-container" class="flex gap-1.5 text-base">
-                    <i class="fa-solid fa-heart text-indigo-500"></i>
-                    <i class="fa-solid fa-heart text-indigo-500"></i>
-                    <i class="fa-solid fa-heart text-indigo-500"></i>
-                </div>
-
-                <!-- Shape Badge -->
-                <div id="badge-game-shape" class="bg-indigo-500/10 border border-indigo-500/30 text-indigo-500 px-2.5 py-1 rounded-lg font-bold text-[11px]">
-                    Heart Shape
-                </div>
-            </div>
-
-            <!-- Hint / Instruction Toast -->
-            <div id="hint-toast" class="bg-slate-900/80 dark:bg-slate-900/80 light:bg-white border border-slate-800/80 dark:border-slate-800/80 light:border-slate-200 px-3 py-2 rounded-xl text-center text-xs dark:text-slate-300 light:text-slate-700 font-semibold flex items-center justify-center gap-2 shadow-sm">
-                <span class="text-amber-500 text-sm">💡</span>
-                <span id="hint-toast-text">Clear outside arrows first to unwrap the silhouette.</span>
-            </div>
-
-            <!-- PUZZLE CANVAS CONTAINER -->
-            <div id="board-wrapper" class="relative w-full aspect-square max-w-[380px] mx-auto bg-slate-900/60 dark:bg-slate-900/60 light:bg-white rounded-2xl border border-slate-800/80 dark:border-slate-800/80 light:border-slate-300 p-2 flex items-center justify-center overflow-hidden shadow-inner">
-                <canvas id="game-canvas" class="w-full h-full cursor-pointer touch-none"></canvas>
-            </div>
-
-            <!-- ACTION CONTROLS (HINT, THEME, CLEAR) -->
-            <div class="flex items-center justify-center gap-4 mt-1">
-                <button onclick="useHint()" class="w-12 h-12 rounded-full bg-slate-900 dark:bg-slate-900 light:bg-white border border-slate-700/80 dark:border-slate-700/80 light:border-slate-300 text-amber-500 hover:bg-amber-500/10 flex flex-col items-center justify-center text-base shadow-md transition relative group">
-                    <i class="fa-solid fa-lightbulb"></i>
-                    <span class="text-[9px] font-bold dark:text-slate-400 light:text-slate-500">Hint</span>
-                </button>
-
-                <button onclick="cyclePalette()" class="w-12 h-12 rounded-full bg-slate-900 dark:bg-slate-900 light:bg-white border border-slate-700/80 dark:border-slate-700/80 light:border-slate-300 text-blue-500 hover:bg-blue-500/10 flex flex-col items-center justify-center text-base shadow-md transition relative group">
-                    <i class="fa-solid fa-palette"></i>
-                    <span class="text-[9px] font-bold dark:text-slate-400 light:text-slate-500">Palette</span>
-                </button>
-            </div>
-
-            <div class="w-full bg-slate-900/80 dark:bg-slate-900/80 light:bg-white border border-slate-800 dark:border-slate-800 light:border-slate-200 py-2.5 rounded-xl text-center text-xs font-black tracking-widest text-amber-500 uppercase shadow-sm">
-                TAP TO CLEAR ALL ARROWS
-            </div>
+        <!-- صندوق التعليمات السريعة -->
+        <div class="w-full bg-rose-500/10 border border-rose-500/20 text-rose-300 rounded-xl px-3 py-2 text-xs text-center font-semibold flex items-center justify-center gap-2">
+            <span>💡 ضغطة = ❌ للاستبعاد | ضغطتان = 🐱 وضع القطة</span>
         </div>
 
-        <!-- VIEW 3: LEVEL MAP VIEW -->
-        <div id="view-map" class="hidden flex-col gap-4 py-2 my-auto">
-            <div class="flex items-center justify-between">
-                <button onclick="switchView('home')" class="w-9 h-9 rounded-full bg-slate-800/80 dark:bg-slate-800/80 light:bg-slate-200 hover:opacity-80 flex items-center justify-center dark:text-slate-300 light:text-slate-700">
-                    <i class="fa-solid fa-arrow-left"></i>
-                </button>
-                <h2 class="text-lg font-black dark:text-white light:text-slate-900">LEVEL MAP</h2>
-                <div class="w-9"></div>
-            </div>
-
-            <!-- Filter tabs -->
-            <div class="flex gap-1 bg-slate-900 dark:bg-slate-900 light:bg-white p-1 rounded-xl border border-slate-800 dark:border-slate-800 light:border-slate-200 text-xs font-bold overflow-x-auto shadow-sm">
-                <button class="flex-1 py-1.5 px-3 rounded-lg bg-amber-500 text-slate-950 shadow">1–50</button>
-                <button class="flex-1 py-1.5 px-3 rounded-lg dark:text-slate-400 light:text-slate-600 hover:text-amber-500">51–200</button>
-                <button class="flex-1 py-1.5 px-3 rounded-lg dark:text-slate-400 light:text-slate-600 hover:text-amber-500">201–500</button>
-                <button class="flex-1 py-1.5 px-3 rounded-lg dark:text-slate-400 light:text-slate-600 hover:text-amber-500">501–1,000</button>
-            </div>
-
-            <!-- Grid of Levels -->
-            <div id="levels-grid" class="grid grid-cols-4 gap-2.5 max-h-[380px] overflow-y-auto p-1">
-                <!-- Dynamically Generated -->
-            </div>
+        <!-- شبكة اللعبة GRID -->
+        <div id="grid-container" class="relative w-full aspect-square max-w-[360px] bg-slate-800/50 p-2.5 rounded-2xl border border-slate-700/80 shadow-2xl grid gap-1.5">
+            <!-- الخلايا يتم توليدها بواسطة JavaScript -->
         </div>
 
-        <!-- VIEW 4: DAILY CHALLENGE VIEW -->
-        <div id="view-daily" class="hidden flex-col gap-5 py-4 my-auto text-center">
-            <div class="flex items-center justify-between">
-                <button onclick="switchView('home')" class="w-9 h-9 rounded-full bg-slate-800/80 dark:bg-slate-800/80 light:bg-slate-200 hover:opacity-80 flex items-center justify-center dark:text-slate-300 light:text-slate-700">
-                    <i class="fa-solid fa-arrow-left"></i>
-                </button>
-                <h2 class="text-lg font-black dark:text-white light:text-slate-900">DAILY CHALLENGE</h2>
-                <div class="w-9"></div>
-            </div>
-
-            <div class="flex flex-col items-center gap-3 my-2">
-                <div class="w-20 h-20 rounded-full bg-amber-500/10 border-2 border-amber-500/40 text-amber-500 flex items-center justify-center text-3xl shadow-lg shadow-amber-500/10">
-                    <i class="fa-solid fa-calendar-check"></i>
-                </div>
-                <p id="daily-date" class="text-xs dark:text-slate-400 light:text-slate-500 font-bold">October 23, 2026</p>
-                <h3 class="text-xl font-black dark:text-white light:text-slate-900">Today's Special Puzzle</h3>
-            </div>
-
-            <div class="bg-slate-900/90 dark:bg-slate-900/90 light:bg-white border border-slate-800 dark:border-slate-800 light:border-slate-200 rounded-2xl p-4 flex flex-col gap-3 shadow-sm">
-                <div class="flex justify-between items-center text-xs">
-                    <span class="dark:text-slate-400 light:text-slate-600 font-semibold flex items-center gap-1.5">
-                        <i class="fa-solid fa-fire text-orange-500"></i> Streak:
-                    </span>
-                    <span class="font-black text-orange-500">1 Day</span>
-                </div>
-                <div class="flex justify-between items-center text-xs">
-                    <span class="dark:text-slate-400 light:text-slate-600 font-semibold flex items-center gap-1.5">
-                        <i class="fa-solid fa-coins text-amber-500"></i> Daily Reward:
-                    </span>
-                    <span class="font-black text-amber-500">+250 Coins</span>
-                </div>
-            </div>
-
-            <button onclick="startDailyChallenge()" class="w-full py-3.5 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-slate-950 font-black text-base rounded-xl shadow-lg transition active:scale-[0.98]">
-                START DAILY CHALLENGE
+        <!-- أزرار اختيار الأوضاع والتحكم -->
+        <div class="flex items-center justify-center gap-3 w-full">
+            <button onclick="setTapMode('auto')" id="mode-auto" class="flex-1 py-2.5 px-3 rounded-xl bg-rose-500 text-slate-950 font-bold text-xs shadow-lg shadow-rose-500/20 transition flex items-center justify-center gap-1.5">
+                <span>🔄 وضع تلقائي (❌ ⬅️ 🐱)</span>
             </button>
         </div>
 
     </main>
 
-    <!-- FOOTER / MODALS CONTAINER -->
-
-    <!-- MODAL 1: LEVEL COMPLETE -->
-    <div id="modal-complete" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 flex items-center justify-center p-4 hidden">
-        <div class="bg-slate-900 dark:bg-slate-900 light:bg-white border border-slate-800 dark:border-slate-800 light:border-slate-200 w-full max-w-xs rounded-2xl p-6 text-center flex flex-col items-center gap-4 shadow-2xl">
-            <h2 class="text-2xl font-black text-amber-500 tracking-wide">LEVEL COMPLETE!</h2>
-            <p id="modal-complete-level" class="text-sm font-bold dark:text-slate-300 light:text-slate-700">Level 1</p>
-
-            <!-- Stars display -->
-            <div class="flex gap-2 text-3xl my-1">
-                <i id="star-1" class="fa-solid fa-star text-amber-500"></i>
-                <i id="star-2" class="fa-solid fa-star text-amber-500"></i>
-                <i id="star-3" class="fa-solid fa-star text-slate-700"></i>
+    <!-- نافذة الفوز WIN MODAL -->
+    <div id="win-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-slate-900 border border-slate-800 w-full max-w-xs rounded-2xl p-6 text-center flex flex-col items-center gap-4 shadow-2xl animate-pop">
+            <div class="w-16 h-16 rounded-full bg-rose-500/10 border border-rose-500/30 text-rose-400 flex items-center justify-center text-3xl">
+                🐱
             </div>
+            <h2 class="text-2xl font-bold text-amber-400">ممتاز جداً! 🎉</h2>
+            <p class="text-xs text-slate-300">لقد قمت بتوزيع القطط بنجاح دون أي تعارض!</p>
 
-            <div class="bg-slate-800/80 dark:bg-slate-800/80 light:bg-slate-100 border border-slate-700/50 light:border-slate-300 px-4 py-2 rounded-xl text-amber-500 font-black text-sm flex items-center gap-2">
-                <i class="fa-solid fa-coins"></i>
-                <span id="modal-reward-coins">+100 Coins</span>
-            </div>
-
-            <div class="w-full flex flex-col gap-2 mt-2">
-                <button onclick="nextLevel()" class="w-full py-3 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-slate-950 font-black rounded-xl shadow-lg transition active:scale-[0.98] flex items-center justify-center gap-2">
-                    NEXT LEVEL <i class="fa-solid fa-arrow-right"></i>
-                </button>
-                <button onclick="replayLevel()" class="w-full py-2.5 bg-slate-800 dark:bg-slate-800 light:bg-slate-200 dark:text-slate-200 light:text-slate-800 font-bold text-sm rounded-xl transition flex items-center justify-center gap-2">
-                    <i class="fa-solid fa-rotate-right"></i> Replay
-                </button>
-            </div>
+            <button onclick="nextLevel()" class="w-full py-3 bg-gradient-to-r from-rose-500 to-amber-500 text-slate-950 font-bold text-sm rounded-xl shadow-lg hover:opacity-90 transition">
+                المستوى التالي ➡️
+            </button>
         </div>
     </div>
 
-    <!-- MODAL 2: GAME OVER / OUT OF MOVES -->
-    <div id="modal-failed" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 flex items-center justify-center p-4 hidden">
-        <div class="bg-slate-900 dark:bg-slate-900 light:bg-white border border-slate-800 dark:border-slate-800 light:border-slate-200 w-full max-w-xs rounded-2xl p-6 text-center flex flex-col items-center gap-4 shadow-2xl">
-            <div class="w-14 h-14 rounded-full bg-rose-500/10 border border-rose-500/30 text-rose-500 flex items-center justify-center text-2xl">
-                <i class="fa-solid fa-heart-crack"></i>
-            </div>
-
-            <h2 class="text-xl font-black dark:text-white light:text-slate-900">OUT OF MOVES</h2>
-            <p class="text-xs dark:text-slate-400 light:text-slate-600">Your arrows are still waiting!</p>
-
-            <div class="w-full flex flex-col gap-2 mt-2">
-                <button onclick="watchAdForLife()" class="w-full py-3 bg-blue-600 hover:bg-blue-500 text-white font-black text-xs rounded-xl shadow-lg transition active:scale-[0.98] flex items-center justify-center gap-2">
-                    <i class="fa-solid fa-play-circle text-base"></i> GET +1 LIFE (WATCH AD)
-                </button>
-                <button onclick="replayLevel()" class="w-full py-3 bg-amber-500 hover:bg-amber-600 text-slate-950 font-black text-xs rounded-xl shadow-lg transition active:scale-[0.98] flex items-center justify-center gap-2">
-                    <i class="fa-solid fa-rotate-right"></i> RETRY LEVEL
-                </button>
-                <button onclick="switchView('map')" class="w-full py-2.5 bg-slate-800 dark:bg-slate-800 light:bg-slate-200 dark:text-slate-300 light:text-slate-700 font-bold text-xs rounded-xl transition">
-                    Level Map
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <!-- GAME LOGIC SCRIPT -->
+    <!-- برمجة منطق اللعبة JAVASCRIPT -->
     <script>
         /* ===================================================
-           1. AUDIO SYNTHESIZER (Web Audio API)
+           1. الأصوات (Web Audio API)
            =================================================== */
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         let soundEnabled = true;
@@ -386,53 +129,41 @@
         function playSound(type) {
             if (!soundEnabled) return;
             try {
-                if (audioCtx.state === 'suspended') {
-                    audioCtx.resume();
-                }
+                if (audioCtx.state === 'suspended') audioCtx.resume();
                 const osc = audioCtx.createOscillator();
                 const gain = audioCtx.createGain();
                 osc.connect(gain);
                 gain.connect(audioCtx.destination);
-
                 const now = audioCtx.currentTime;
 
-                if (type === 'tick') {
-                    osc.type = 'triangle';
-                    osc.frequency.setValueAtTime(1200, now);
-                    osc.frequency.exponentialRampToValueAtTime(400, now + 0.04);
-                    gain.gain.setValueAtTime(0.4, now);
-                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.04);
-                    osc.start(now);
-                    osc.stop(now + 0.04);
-                } else if (type === 'slide') {
+                if (type === 'cross') { // صوت وضع ❌
                     osc.type = 'sine';
-                    osc.frequency.setValueAtTime(350, now);
-                    osc.frequency.exponentialRampToValueAtTime(850, now + 0.12);
-                    gain.gain.setValueAtTime(0.2, now);
-                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.12);
-                    osc.start(now);
-                    osc.stop(now + 0.12);
-                } else if (type === 'error') {
-                    osc.type = 'sawtooth';
-                    osc.frequency.setValueAtTime(160, now);
-                    osc.frequency.setValueAtTime(110, now + 0.08);
-                    gain.gain.setValueAtTime(0.3, now);
-                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.18);
-                    osc.start(now);
-                    osc.stop(now + 0.18);
-                } else if (type === 'win') {
-                    osc.type = 'triangle';
                     osc.frequency.setValueAtTime(400, now);
-                    osc.frequency.setValueAtTime(600, now + 0.1);
-                    osc.frequency.setValueAtTime(800, now + 0.2);
-                    gain.gain.setValueAtTime(0.25, now);
-                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.35);
-                    osc.start(now);
-                    osc.stop(now + 0.35);
-                } else if (type === 'click') {
-                    osc.type = 'sine';
-                    osc.frequency.setValueAtTime(600, now);
                     gain.gain.setValueAtTime(0.1, now);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.05);
+                    osc.start(now);
+                    osc.stop(now + 0.05);
+                } else if (type === 'cat') { // صوت "مياو" عند وضع القطة
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(600, now);
+                    osc.frequency.exponentialRampToValueAtTime(900, now + 0.12);
+                    gain.gain.setValueAtTime(0.2, now);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.25);
+                    osc.start(now);
+                    osc.stop(now + 0.25);
+                } else if (type === 'win') { // صوت الفوز
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(523.25, now);
+                    osc.frequency.setValueAtTime(659.25, now + 0.1);
+                    osc.frequency.setValueAtTime(783.99, now + 0.2);
+                    gain.gain.setValueAtTime(0.2, now);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.4);
+                    osc.start(now);
+                    osc.stop(now + 0.4);
+                } else if (type === 'clear') { // صوت المسح
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(300, now);
+                    gain.gain.setValueAtTime(0.08, now);
                     gain.gain.exponentialRampToValueAtTime(0.01, now + 0.04);
                     osc.start(now);
                     osc.stop(now + 0.04);
@@ -442,596 +173,217 @@
 
         function toggleSound() {
             soundEnabled = !soundEnabled;
-            const btn = document.getElementById('sound-btn');
-            btn.innerHTML = soundEnabled 
-                ? '<i class="fa-solid fa-music text-amber-400"></i>' 
+            document.getElementById('sound-btn').innerHTML = soundEnabled 
+                ? '<i class="fa-solid fa-volume-high"></i>' 
                 : '<i class="fa-solid fa-volume-xmark text-slate-500"></i>';
         }
 
-        let isDarkMode = true;
-        function toggleTheme() {
-            isDarkMode = !isDarkMode;
-            const body = document.body;
-            const themeIcon = document.getElementById('theme-icon');
-
-            if (isDarkMode) {
-                body.classList.add('dark');
-                body.classList.remove('light');
-                body.style.backgroundColor = '#0B1120';
-                body.style.color = '#f8fafc';
-                themeIcon.className = 'fa-solid fa-sun text-amber-400';
-            } else {
-                body.classList.remove('dark');
-                body.classList.add('light');
-                body.style.backgroundColor = '#f1f5f9';
-                body.style.color = '#0f172a';
-                themeIcon.className = 'fa-solid fa-moon text-indigo-600';
-            }
-            playSound('click');
-            drawBoard();
-        }
-
         /* ===================================================
-           2. GAME DATA & LEVEL DEFINITIONS
+           2. بيانات المستويات والمناطق الملونة
            =================================================== */
-        let coins = 300;
-        let totalStars = 0;
-        let solvedCount = 0;
-        let totalUntangledArrows = 0;
-        let currentLevelIndex = 0;
-
-        // Color Themes for Arrows
-        const PALETTES = [
-            { id: 'navy', line: '#1e3a8a', arrow: '#3b82f6', bgDotDark: '#334155', bgDotLight: '#cbd5e1' },
-            { id: 'emerald', line: '#065f46', arrow: '#10b981', bgDotDark: '#334155', bgDotLight: '#cbd5e1' },
-            { id: 'purple', line: '#581c87', arrow: '#a855f7', bgDotDark: '#334155', bgDotLight: '#cbd5e1' },
-            { id: 'rose', line: '#881337', arrow: '#f43f5e', bgDotDark: '#334155', bgDotLight: '#cbd5e1' }
-        ];
-        let currentPaletteIndex = 0;
-
-        // Direction vectors: 0=UP, 1=RIGHT, 2=DOWN, 3=LEFT
-        const DIRS = [
-            { x: 0, y: -1 }, // UP
-            { x: 1, y: 0 },  // RIGHT
-            { x: 0, y: 1 },  // DOWN
-            { x: -1, y: 0 }  // LEFT
+        // ألوان المناطق الملونة في الشبكة
+        const REGION_COLORS = [
+            '#f43f5e', // Rose
+            '#3b82f6', // Blue
+            '#10b981', // Emerald
+            '#f59e0b', // Amber
+            '#8b5cf6', // Purple
+            '#06b6d4', // Cyan
+            '#ec4899', // Pink
         ];
 
-        /* LEVEL DEFINITIONS (ALL 100% SOLVABLE) */
-        const LEVELS_DATA = [
-            // Level 1: Heart Silhouette
+        const LEVELS = [
+            // Level 1: 5x5
             {
-                name: 'Heart Silhouette',
-                badge: '❤️ Heart Silhouette',
-                moves: 35,
-                gridCols: 11,
-                gridRows: 11,
-                arrows: [
-                    { id: 1, segments: [{x:3,y:1},{x:1,y:1}], dir: 3 },
-                    { id: 2, segments: [{x:1,y:2},{x:1,y:4}], dir: 2 },
-                    { id: 3, segments: [{x:1,y:5},{x:1,y:7},{x:2,y:7},{x:2,y:9}], dir: 2 },
-                    { id: 4, segments: [{x:2,y:10},{x:3,y:10}], dir: 1 },
-                    { id: 5, segments: [{x:4,y:9},{x:5,y:9}], dir: 1 },
-                    { id: 6, segments: [{x:5,y:8},{x:5,y:7}], dir: 0 },
-                    { id: 7, segments: [{x:6,y:9},{x:7,y:9}], dir: 1 },
-                    { id: 8, segments: [{x:8,y:10},{x:9,y:10}], dir: 1 },
-                    { id: 9, segments: [{x:9,y:8},{x:9,y:6}], dir: 0 },
-                    { id: 10, segments: [{x:9,y:5},{x:9,y:3}], dir: 0 },
-                    { id: 11, segments: [{x:9,y:2},{x:7,y:2}], dir: 3 },
-                    { id: 12, segments: [{x:6,y:1},{x:6,y:2}], dir: 2 },
-                    { id: 13, segments: [{x:3,y:3},{x:4,y:3}], dir: 1 },
-                    { id: 14, segments: [{x:4,y:5},{x:3,y:5}], dir: 3 },
-                    { id: 15, segments: [{x:5,y:5},{x:5,y:4}], dir: 0 },
-                    { id: 16, segments: [{x:7,y:4},{x:8,y:4}], dir: 1 },
-                    { id: 17, segments: [{x:7,y:6},{x:7,y:7}], dir: 2 },
-                    { id: 18, segments: [{x:4,y:7},{x:4,y:8}], dir: 2 },
+                size: 5,
+                // مصفوفة تُحدد معرف المنطقة (Region ID) لكل خلية
+                regions: [
+                    [0, 0, 1, 1, 1],
+                    [0, 2, 2, 1, 3],
+                    [0, 2, 4, 3, 3],
+                    [2, 2, 4, 4, 3],
+                    [2, 4, 4, 3, 3]
                 ]
             },
-            // Level 2: Diamond Crest
+            // Level 2: 5x5
             {
-                name: 'Diamond Crest',
-                badge: '💎 Diamond Crest',
-                moves: 30,
-                gridCols: 10,
-                gridRows: 10,
-                arrows: [
-                    { id: 1, segments: [{x:4,y:1},{x:2,y:1}], dir: 3 },
-                    { id: 2, segments: [{x:1,y:2},{x:1,y:4}], dir: 2 },
-                    { id: 3, segments: [{x:1,y:5},{x:3,y:5}], dir: 1 },
-                    { id: 4, segments: [{x:4,y:8},{x:4,y:9}], dir: 2 },
-                    { id: 5, segments: [{x:5,y:9},{x:7,y:9}], dir: 1 },
-                    { id: 6, segments: [{x:8,y:8},{x:8,y:5}], dir: 0 },
-                    { id: 7, segments: [{x:8,y:4},{x:8,y:2}], dir: 0 },
-                    { id: 8, segments: [{x:7,y:1},{x:5,y:1}], dir: 3 },
-                    { id: 9, segments: [{x:3,y:3},{x:3,y:4}], dir: 2 },
-                    { id: 10, segments: [{x:6,y:3},{x:5,y:3}], dir: 3 },
-                    { id: 11, segments: [{x:5,y:6},{x:6,y:6}], dir: 1 },
+                size: 5,
+                regions: [
+                    [0, 0, 0, 1, 1],
+                    [0, 2, 0, 1, 3],
+                    [2, 2, 1, 1, 3],
+                    [2, 4, 4, 3, 3],
+                    [4, 4, 4, 4, 3]
                 ]
             },
-            // Level 3: Star Silhouette (FIXED & 100% SOLVABLE)
+            // Level 3: 6x6
             {
-                name: 'Shining Star',
-                badge: '⭐ Star Crest',
-                moves: 32,
-                gridCols: 11,
-                gridRows: 11,
-                arrows: [
-                    // Outer escape keys
-                    { id: 1, segments: [{x:5,y:1},{x:5,y:2}], dir: 0 }, // UP OUT
-                    { id: 2, segments: [{x:3,y:3},{x:1,y:3}], dir: 3 }, // LEFT OUT
-                    { id: 3, segments: [{x:1,y:4},{x:1,y:6}], dir: 3 }, // LEFT OUT
-                    { id: 4, segments: [{x:3,y:7},{x:1,y:7}], dir: 3 }, // LEFT OUT
-                    { id: 5, segments: [{x:3,y:9},{x:3,y:10}], dir: 2 }, // DOWN OUT
-                    { id: 6, segments: [{x:5,y:8},{x:5,y:9}], dir: 2 }, // DOWN OUT
-                    { id: 7, segments: [{x:7,y:9},{x:7,y:10}], dir: 2 }, // DOWN OUT
-                    { id: 8, segments: [{x:7,y:7},{x:9,y:7}], dir: 1 }, // RIGHT OUT
-                    { id: 9, segments: [{x:9,y:6},{x:9,y:4}], dir: 1 }, // RIGHT OUT
-                    { id: 10, segments: [{x:7,y:3},{x:9,y:3}], dir: 1 }, // RIGHT OUT
-                    // Inner arrows that unlock after outer ones clear
-                    { id: 11, segments: [{x:4,y:5},{x:6,y:5}], dir: 1 },
-                    { id: 12, segments: [{x:6,y:6},{x:4,y:6}], dir: 3 }
+                size: 6,
+                regions: [
+                    [0, 0, 1, 1, 2, 2],
+                    [0, 0, 1, 1, 2, 2],
+                    [3, 3, 4, 4, 2, 5],
+                    [3, 3, 4, 4, 5, 5],
+                    [3, 4, 4, 5, 5, 5],
+                    [3, 3, 5, 5, 5, 5]
                 ]
             }
         ];
 
-        // Procedural level generator with guaranteed outer keys
-        for (let i = 4; i <= 20; i++) {
-            LEVELS_DATA.push({
-                name: `Maze Level ${i}`,
-                badge: `🧩 Maze Level ${i}`,
-                moves: 25 + (i % 10),
-                gridCols: 9 + (i % 3),
-                gridRows: 9 + (i % 3),
-                arrows: generateProceduralArrows(8 + (i % 4), 9 + (i % 3))
-            });
-        }
+        let currentLevelIdx = 0;
+        let gridState = []; // تخزين حالة كل خلية (0: فارغ, 1: ❌, 2: 🐱)
 
-        function generateProceduralArrows(count, gridSize) {
-            const arrs = [];
-            let idCounter = 1;
-            // Generate clean unblocking layers
-            for (let i = 1; i < gridSize - 1; i += 2) {
-                arrs.push({
-                    id: idCounter++,
-                    segments: [{x: i, y: 1}, {x: i, y: Math.min(i + 1, gridSize - 2)}],
-                    dir: 0 // Outwards UP
-                });
-                arrs.push({
-                    id: idCounter++,
-                    segments: [{x: gridSize - 2, y: i}, {x: Math.max(1, gridSize - i - 1), y: i}],
-                    dir: 1 // Outwards RIGHT
-                });
+        /* ===================================================
+           3. بناء اللعبة والرسم
+           =================================================== */
+        function initLevel(levelIdx) {
+            currentLevelIdx = levelIdx;
+            const level = LEVELS[currentLevelIdx];
+            const size = level.size;
+
+            gridState = Array(size).fill(0).map(() => Array(size).fill(0));
+
+            document.getElementById('level-title').innerText = `Level ${currentLevelIdx + 1} (${size}x${size})`;
+            document.getElementById('win-modal').classList.add('hidden');
+
+            // تحديث العداد العلوي للقطط
+            const counterEl = document.getElementById('cat-counter');
+            counterEl.innerHTML = '';
+            for (let i = 0; i < size; i++) {
+                counterEl.innerHTML += `<span id="cat-badge-${i}" class="text-xl opacity-30 transition-opacity">🐱</span>`;
             }
-            return arrs;
+
+            // بناء شبكة الخلايا
+            const container = document.getElementById('grid-container');
+            container.style.gridTemplateColumns = `repeat(${size}, minmax(0, 1fr))`;
+            container.style.gridTemplateRows = `repeat(${size}, minmax(0, 1fr))`;
+            container.innerHTML = '';
+
+            for (let r = 0; r < size; r++) {
+                for (let c = 0; c < size; c++) {
+                    const regId = level.regions[r][c];
+                    const color = REGION_COLORS[regId % REGION_COLORS.length];
+
+                    const cell = document.createElement('div');
+                    cell.id = `cell-${r}-${c}`;
+                    cell.className = 'relative flex items-center justify-center rounded-xl cursor-pointer font-bold text-xl transition-all select-none border border-black/20';
+                    cell.style.backgroundColor = color;
+                    cell.style.opacity = '0.85';
+
+                    cell.onclick = () => handleCellTap(r, c);
+
+                    container.appendChild(cell);
+                }
+            }
         }
 
         /* ===================================================
-           3. GAMEPLAY STATE & CANVAS RENDERER
+           4. منطق الضغط والتحقق من القواعد
            =================================================== */
-        let activeLevel = null;
-        let gameState = {
-            arrows: [],
-            lives: 3,
-            movesLeft: 35,
-            animatingArrow: null,
-            hintArrowId: null,
-            cellWidth: 0,
-            cellHeight: 0
-        };
+        function handleCellTap(r, c) {
+            const currentState = gridState[r][c];
+            // التبديل الدوري: فارغ (0) ⬅️ ❌ (1) ⬅️ 🐱 (2) ⬅️ فارغ (0)
+            const nextState = (currentState + 1) % 3;
 
-        const canvas = document.getElementById('game-canvas');
-        const ctx = canvas.getContext('2d');
+            gridState[r][c] = nextState;
+            updateCellUI(r, c);
 
-        function switchView(viewName) {
-            document.getElementById('view-home').classList.add('hidden');
-            document.getElementById('view-game').classList.add('hidden');
-            document.getElementById('view-map').classList.add('hidden');
-            document.getElementById('view-daily').classList.add('hidden');
+            if (nextState === 1) playSound('cross');
+            else if (nextState === 2) playSound('cat');
+            else playSound('clear');
 
-            document.getElementById(`view-${viewName}`).classList.remove('hidden');
-            playSound('click');
+            validateGrid();
+        }
 
-            if (viewName === 'map') {
-                renderMapGrid();
+        function updateCellUI(r, c) {
+            const cell = document.getElementById(`cell-${r}-${c}`);
+            const state = gridState[r][c];
+
+            cell.classList.remove('animate-shake');
+
+            if (state === 0) {
+                cell.innerHTML = '';
+            } else if (state === 1) {
+                cell.innerHTML = `<span class="text-slate-900/40 text-lg">❌</span>`;
+            } else if (state === 2) {
+                cell.innerHTML = `<span class="animate-pop text-2xl">🐱</span>`;
             }
         }
 
-        function updateUIStats() {
-            document.getElementById('coin-count').innerText = coins;
-            document.getElementById('star-count').innerText = totalStars;
-            document.getElementById('stat-coins').innerText = coins;
-            document.getElementById('stat-stars').innerText = totalStars;
-            document.getElementById('stat-solved').innerText = solvedCount;
-            document.getElementById('stat-cleared-arrows').innerText = totalUntangledArrows;
+        function validateGrid() {
+            const level = LEVELS[currentLevelIdx];
+            const size = level.size;
 
-            const lvlData = LEVELS_DATA[currentLevelIndex] || LEVELS_DATA[0];
-            document.getElementById('home-level-title').innerText = `Level ${currentLevelIndex + 1}`;
-            document.getElementById('home-shape-badge').innerText = lvlData.badge;
+            let catLocations = [];
+            let isValid = true;
 
-            const progress = Math.min(100, Math.round(((currentLevelIndex) / LEVELS_DATA.length) * 100));
-            document.getElementById('home-progress-bar').style.width = `${progress}%`;
-        }
-
-        function startLevel(index) {
-            currentLevelIndex = index;
-            activeLevel = LEVELS_DATA[currentLevelIndex] || LEVELS_DATA[0];
-
-            gameState.lives = 3;
-            gameState.movesLeft = activeLevel.moves;
-            gameState.hintArrowId = null;
-            gameState.animatingArrow = null;
-
-            gameState.arrows = JSON.parse(JSON.stringify(activeLevel.arrows));
-
-            document.getElementById('game-level-num').innerText = `Level ${currentLevelIndex + 1}`;
-            document.getElementById('game-shape-name').innerText = activeLevel.name;
-            document.getElementById('badge-game-shape').innerText = activeLevel.badge;
-            document.getElementById('moves-left').innerText = gameState.movesLeft;
-
-            updateHeartsUI();
-            switchView('game');
-            resizeCanvas();
-        }
-
-        function startDailyChallenge() {
-            startLevel(0);
-        }
-
-        function updateHeartsUI() {
-            const container = document.getElementById('hearts-container');
-            let html = '';
-            for (let i = 0; i < 3; i++) {
-                if (i < gameState.lives) {
-                    html += `<i class="fa-solid fa-heart text-indigo-500"></i>`;
-                } else {
-                    html += `<i class="fa-regular fa-heart ${isDarkMode ? 'text-slate-700' : 'text-slate-300'}"></i>`;
-                }
-            }
-            container.innerHTML = html;
-        }
-
-        function cyclePalette() {
-            currentPaletteIndex = (currentPaletteIndex + 1) % PALETTES.length;
-            playSound('click');
-            drawBoard();
-        }
-
-        function resizeCanvas() {
-            const wrapper = document.getElementById('board-wrapper');
-            if (!wrapper) return;
-            const size = Math.min(wrapper.clientWidth - 16, 360);
-            canvas.width = size;
-            canvas.height = size;
-
-            if (activeLevel) {
-                gameState.cellWidth = canvas.width / activeLevel.gridCols;
-                gameState.cellHeight = canvas.height / activeLevel.gridRows;
-            }
-            drawBoard();
-        }
-
-        window.addEventListener('resize', resizeCanvas);
-
-        /* Render Loop / Canvas Drawing */
-        function drawBoard() {
-            if (!activeLevel) return;
-
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            const cols = activeLevel.gridCols;
-            const rows = activeLevel.gridRows;
-            const cw = gameState.cellWidth;
-            const ch = gameState.cellHeight;
-            const palette = PALETTES[currentPaletteIndex];
-
-            // 1. Draw Dot Grid Background
-            for (let r = 0; r < rows; r++) {
-                for (let c = 0; c < cols; c++) {
-                    ctx.beginPath();
-                    ctx.arc((c + 0.5) * cw, (r + 0.5) * ch, 2.5, 0, Math.PI * 2);
-                    ctx.fillStyle = isDarkMode ? palette.bgDotDark : palette.bgDotLight;
-                    ctx.fill();
+            // جمع مواقع القطط
+            for (let r = 0; r < size; r++) {
+                for (let c = 0; c < size; c++) {
+                    if (gridState[r][c] === 2) {
+                        catLocations.push({ r, c, region: level.regions[r][c] });
+                    }
                 }
             }
 
-            // 2. Draw Arrows
-            gameState.arrows.forEach(arr => {
-                const isHint = (arr.id === gameState.hintArrowId);
-                drawSingleArrow(arr, cw, ch, palette, isHint);
+            // تحديث شريط القطط العلوية
+            for (let i = 0; i < size; i++) {
+                const badge = document.getElementById(`cat-badge-${i}`);
+                if (i < catLocations.length) badge.classList.remove('opacity-30');
+                else badge.classList.add('opacity-30');
+            }
+
+            // فحص التعارضات
+            let invalidCells = new Set();
+
+            for (let i = 0; i < catLocations.length; i++) {
+                for (let j = i + 1; j < catLocations.length; j++) {
+                    const c1 = catLocations[i];
+                    const c2 = catLocations[j];
+
+                    // 1. نفس الصف
+                    const sameRow = c1.r === c2.r;
+                    // 2. نفس العمود
+                    const sameCol = c1.c === c2.c;
+                    // 3. نفس المنطقة الملونة
+                    const sameRegion = c1.region === c2.region;
+                    // 4. التلامس المباشر أو القطري (Diagonal Adjacent)
+                    const isAdjacent = Math.abs(c1.r - c2.r) <= 1 && Math.abs(c1.c - c2.c) <= 1;
+
+                    if (sameRow || sameCol || sameRegion || isAdjacent) {
+                        isValid = false;
+                        invalidCells.add(`${c1.r}-${c1.c}`);
+                        invalidCells.add(`${c2.r}-${c2.c}`);
+                    }
+                }
+            }
+
+            // تمييز الخلايا المتعارة بصرياً
+            invalidCells.forEach(key => {
+                const el = document.getElementById(`cell-${key}`);
+                if (el) el.classList.add('animate-shake');
             });
-        }
 
-        function drawSingleArrow(arr, cw, ch, palette, isHint) {
-            ctx.save();
-            ctx.lineWidth = Math.max(4, cw * 0.18);
-            ctx.lineCap = 'round';
-            ctx.lineJoin = 'round';
-
-            const strokeColor = arr.isWiggling ? '#ef4444' : (isHint ? '#f59e0b' : palette.line);
-            const headColor = arr.isWiggling ? '#ef4444' : (isHint ? '#fbbf24' : palette.arrow);
-
-            ctx.strokeStyle = strokeColor;
-
-            let offset = { x: 0, y: 0 };
-            if (arr.isWiggling) {
-                offset.x = (Math.random() - 0.5) * 6;
-                offset.y = (Math.random() - 0.5) * 6;
-            } else if (arr.animOffset) {
-                offset = arr.animOffset;
-            }
-
-            // Draw line segments
-            ctx.beginPath();
-            const segs = arr.segments;
-            ctx.moveTo((segs[0].x + 0.5) * cw + offset.x, (segs[0].y + 0.5) * ch + offset.y);
-
-            for (let i = 1; i < segs.length; i++) {
-                ctx.lineTo((segs[i].x + 0.5) * cw + offset.x, (segs[i].y + 0.5) * ch + offset.y);
-            }
-            ctx.stroke();
-
-            // Draw Arrowhead
-            const tip = segs[segs.length - 1];
-            const tipX = (tip.x + 0.5) * cw + offset.x;
-            const tipY = (tip.y + 0.5) * ch + offset.y;
-            const dir = DIRS[arr.dir];
-
-            const arrowSize = cw * 0.35;
-            ctx.fillStyle = headColor;
-            ctx.beginPath();
-
-            if (dir.x === 0 && dir.y === -1) { // UP
-                ctx.moveTo(tipX, tipY - arrowSize);
-                ctx.lineTo(tipX - arrowSize * 0.7, tipY + arrowSize * 0.5);
-                ctx.lineTo(tipX + arrowSize * 0.7, tipY + arrowSize * 0.5);
-            } else if (dir.x === 1 && dir.y === 0) { // RIGHT
-                ctx.moveTo(tipX + arrowSize, tipY);
-                ctx.lineTo(tipX - arrowSize * 0.5, tipY - arrowSize * 0.7);
-                ctx.lineTo(tipX - arrowSize * 0.5, tipY + arrowSize * 0.7);
-            } else if (dir.x === 0 && dir.y === 1) { // DOWN
-                ctx.moveTo(tipX, tipY + arrowSize);
-                ctx.lineTo(tipX - arrowSize * 0.7, tipY - arrowSize * 0.5);
-                ctx.lineTo(tipX + arrowSize * 0.7, tipY - arrowSize * 0.5);
-            } else if (dir.x === -1 && dir.y === 0) { // LEFT
-                ctx.moveTo(tipX - arrowSize, tipY);
-                ctx.lineTo(tipX + arrowSize * 0.5, tipY - arrowSize * 0.7);
-                ctx.lineTo(tipX + arrowSize * 0.5, tipY + arrowSize * 0.7);
-            }
-            ctx.closePath();
-            ctx.fill();
-
-            ctx.restore();
-        }
-
-        /* ===================================================
-           4. ARROW COLLISION & TAP LOGIC
-           =================================================== */
-
-        function isArrowPathClear(targetArr) {
-            const segs = targetArr.segments;
-            const tip = segs[segs.length - 1];
-            const dir = DIRS[targetArr.dir];
-
-            let currX = tip.x + dir.x;
-            let currY = tip.y + dir.y;
-
-            const cols = activeLevel.gridCols;
-            const rows = activeLevel.gridRows;
-
-            while (currX >= 0 && currX < cols && currY >= 0 && currY < rows) {
-                for (let other of gameState.arrows) {
-                    if (other.id === targetArr.id) continue;
-                    for (let pt of other.segments) {
-                        if (pt.x === currX && pt.y === currY) {
-                            return false;
-                        }
-                    }
-                }
-                currX += dir.x;
-                currY += dir.y;
-            }
-            return true;
-        }
-
-        canvas.addEventListener('click', function (e) {
-            if (gameState.animatingArrow) return;
-
-            const rect = canvas.getBoundingClientRect();
-            const clickX = e.clientX - rect.left;
-            const clickY = e.clientY - rect.top;
-
-            const cw = gameState.cellWidth;
-            const ch = gameState.cellHeight;
-
-            let clickedArrow = null;
-
-            for (let arr of gameState.arrows) {
-                for (let seg of arr.segments) {
-                    const ptX = (seg.x + 0.5) * cw;
-                    const ptY = (seg.y + 0.5) * ch;
-                    const dist = Math.hypot(clickX - ptX, clickY - ptY);
-
-                    if (dist < cw * 0.6) {
-                        clickedArrow = arr;
-                        break;
-                    }
-                }
-                if (clickedArrow) break;
-            }
-
-            if (clickedArrow) {
-                handleArrowTap(clickedArrow);
-            }
-        });
-
-        function handleArrowTap(arr) {
-            gameState.hintArrowId = null;
-
-            playSound('tick');
-
-            if (isArrowPathClear(arr)) {
-                setTimeout(() => playSound('slide'), 40);
-                animateArrowSlideOut(arr);
-            } else {
-                playSound('error');
-                arr.isWiggling = true;
-                drawBoard();
-
+            // شرط الفوز: عدد القطط يطابق حجم الشبكة وبدون أي تعارض
+            if (catLocations.length === size && isValid) {
+                playSound('win');
                 setTimeout(() => {
-                    arr.isWiggling = false;
-                    drawBoard();
+                    document.getElementById('win-modal').classList.remove('hidden');
                 }, 300);
-
-                gameState.lives--;
-                gameState.movesLeft--;
-                document.getElementById('moves-left').innerText = gameState.movesLeft;
-                updateHeartsUI();
-
-                if (gameState.lives <= 0 || gameState.movesLeft <= 0) {
-                    setTimeout(() => {
-                        showModal('failed');
-                    }, 400);
-                }
             }
         }
 
-        function animateArrowSlideOut(arr) {
-            gameState.animatingArrow = arr;
-            let frame = 0;
-            const dir = DIRS[arr.dir];
-            const maxDist = canvas.width;
-
-            arr.animOffset = { x: 0, y: 0 };
-
-            function step() {
-                frame += 14;
-                arr.animOffset.x = dir.x * frame;
-                arr.animOffset.y = dir.y * frame;
-
-                drawBoard();
-
-                if (frame < maxDist) {
-                    requestAnimationFrame(step);
-                } else {
-                    gameState.arrows = gameState.arrows.filter(a => a.id !== arr.id);
-                    gameState.animatingArrow = null;
-                    totalUntangledArrows++;
-                    drawBoard();
-
-                    if (gameState.arrows.length === 0) {
-                        playSound('win');
-                        setTimeout(handleLevelWin, 300);
-                    }
-                }
-            }
-            requestAnimationFrame(step);
-        }
-
-        function useHint() {
-            const clearArr = gameState.arrows.find(arr => isArrowPathClear(arr));
-
-            if (clearArr) {
-                gameState.hintArrowId = clearArr.id;
-                playSound('click');
-                drawBoard();
-                document.getElementById('hint-toast-text').innerText = 'Ready arrow highlighted!';
-            } else {
-                document.getElementById('hint-toast-text').innerText = 'No unblocked arrow found!';
-            }
-        }
-
-        /* ===================================================
-           5. WIN / LOSE & MODAL CONTROLS
-           =================================================== */
-
-        function handleLevelWin() {
-            solvedCount++;
-            let earnedCoins = 100;
-            let stars = 3;
-
-            if (gameState.lives === 2) stars = 2;
-            if (gameState.lives === 1) stars = 1;
-
-            if (stars === 3) earnedCoins = 150;
-
-            coins += earnedCoins;
-            totalStars += stars;
-
-            updateUIStats();
-
-            document.getElementById('modal-complete-level').innerText = `Level ${currentLevelIndex + 1}`;
-            document.getElementById('modal-reward-coins').innerText = `+${earnedCoins} Coins`;
-
-            document.getElementById('star-1').className = stars >= 1 ? 'fa-solid fa-star text-amber-500' : 'fa-solid fa-star text-slate-700';
-            document.getElementById('star-2').className = stars >= 2 ? 'fa-solid fa-star text-amber-500' : 'fa-solid fa-star text-slate-700';
-            document.getElementById('star-3').className = stars >= 3 ? 'fa-solid fa-star text-amber-500' : 'fa-solid fa-star text-slate-700';
-
-            showModal('complete');
-        }
-
-        function showModal(id) {
-            document.getElementById(`modal-${id}`).classList.remove('hidden');
-        }
-
-        function hideModals() {
-            document.getElementById('modal-complete').classList.add('hidden');
-            document.getElementById('modal-failed').classList.add('hidden');
+        function resetBoard() {
+            initLevel(currentLevelIdx);
         }
 
         function nextLevel() {
-            hideModals();
-            currentLevelIndex = (currentLevelIndex + 1) % LEVELS_DATA.length;
-            startLevel(currentLevelIndex);
+            const nextIdx = (currentLevelIdx + 1) % LEVELS.length;
+            initLevel(nextIdx);
         }
 
-        function replayLevel() {
-            hideModals();
-            startLevel(currentLevelIndex);
-        }
-
-        function watchAdForLife() {
-            hideModals();
-            gameState.lives = 1;
-            gameState.movesLeft += 5;
-            document.getElementById('moves-left').innerText = gameState.movesLeft;
-            updateHeartsUI();
-            playSound('win');
-        }
-
-        /* ===================================================
-           6. MAP GRID RENDERER
-           =================================================== */
-        function renderMapGrid() {
-            const grid = document.getElementById('levels-grid');
-            grid.innerHTML = '';
-
-            for (let i = 0; i < 20; i++) {
-                const btn = document.createElement('button');
-                const isUnlocked = i <= currentLevelIndex;
-
-                btn.className = `aspect-square rounded-xl flex flex-col items-center justify-center font-black text-sm border transition ${
-                    isUnlocked
-                        ? 'bg-slate-800 dark:bg-slate-800 light:bg-slate-100 border-amber-500/40 text-amber-500 hover:opacity-90 shadow-md'
-                        : 'bg-slate-900/50 dark:bg-slate-900/50 light:bg-slate-200 border-slate-800 dark:border-slate-800 light:border-slate-300 text-slate-600 cursor-not-allowed'
-                }`;
-
-                btn.innerHTML = isUnlocked 
-                    ? `<span>${i + 1}</span>` 
-                    : `<i class="fa-solid fa-lock text-xs"></i>`;
-
-                if (isUnlocked) {
-                    btn.onclick = () => {
-                        startLevel(i);
-                    };
-                }
-
-                grid.appendChild(btn);
-            }
-        }
-
-        /* INITIALIZATION */
-        window.onload = function () {
-            updateUIStats();
-        };
+        // تشغيل اللعبة فور تحميل الصفحة
+        window.onload = () => initLevel(0);
     </script>
 </body>
 </html>
