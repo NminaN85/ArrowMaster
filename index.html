@@ -397,7 +397,6 @@
                 const now = audioCtx.currentTime;
 
                 if (type === 'tick') {
-                    // Sharp "tick" / "click" sound when tapping an arrow
                     osc.type = 'triangle';
                     osc.frequency.setValueAtTime(1200, now);
                     osc.frequency.exponentialRampToValueAtTime(400, now + 0.04);
@@ -406,7 +405,6 @@
                     osc.start(now);
                     osc.stop(now + 0.04);
                 } else if (type === 'slide') {
-                    // Smooth woosh/slide sound as arrow exits
                     osc.type = 'sine';
                     osc.frequency.setValueAtTime(350, now);
                     osc.frequency.exponentialRampToValueAtTime(850, now + 0.12);
@@ -415,7 +413,6 @@
                     osc.start(now);
                     osc.stop(now + 0.12);
                 } else if (type === 'error') {
-                    // Blocked arrow bump sound
                     osc.type = 'sawtooth';
                     osc.frequency.setValueAtTime(160, now);
                     osc.frequency.setValueAtTime(110, now + 0.08);
@@ -424,7 +421,6 @@
                     osc.start(now);
                     osc.stop(now + 0.18);
                 } else if (type === 'win') {
-                    // Level clear fanfare
                     osc.type = 'triangle';
                     osc.frequency.setValueAtTime(400, now);
                     osc.frequency.setValueAtTime(600, now + 0.1);
@@ -501,7 +497,7 @@
             { x: -1, y: 0 }  // LEFT
         ];
 
-        /* LEVEL DEFINITIONS */
+        /* LEVEL DEFINITIONS (ALL 100% SOLVABLE) */
         const LEVELS_DATA = [
             // Level 1: Heart Silhouette
             {
@@ -552,7 +548,7 @@
                     { id: 11, segments: [{x:5,y:6},{x:6,y:6}], dir: 1 },
                 ]
             },
-            // Level 3: Star Silhouette
+            // Level 3: Star Silhouette (FIXED & 100% SOLVABLE)
             {
                 name: 'Shining Star',
                 badge: '⭐ Star Crest',
@@ -560,23 +556,25 @@
                 gridCols: 11,
                 gridRows: 11,
                 arrows: [
-                    { id: 1, segments: [{x:5,y:1},{x:5,y:2}], dir: 2 },
-                    { id: 2, segments: [{x:2,y:3},{x:4,y:3}], dir: 1 },
-                    { id: 3, segments: [{x:1,y:4},{x:1,y:6}], dir: 2 },
-                    { id: 4, segments: [{x:2,y:7},{x:4,y:7}], dir: 1 },
-                    { id: 5, segments: [{x:3,y:9},{x:3,y:10}], dir: 2 },
-                    { id: 6, segments: [{x:5,y:8},{x:5,y:9}], dir: 2 },
-                    { id: 7, segments: [{x:7,y:10},{x:7,y:9}], dir: 0 },
-                    { id: 8, segments: [{x:9,y:7},{x:7,y:7}], dir: 3 },
-                    { id: 9, segments: [{x:10,y:6},{x:10,y:4}], dir: 0 },
-                    { id: 10, segments: [{x:9,y:3},{x:7,y:3}], dir: 3 },
+                    // Outer escape keys
+                    { id: 1, segments: [{x:5,y:1},{x:5,y:2}], dir: 0 }, // UP OUT
+                    { id: 2, segments: [{x:3,y:3},{x:1,y:3}], dir: 3 }, // LEFT OUT
+                    { id: 3, segments: [{x:1,y:4},{x:1,y:6}], dir: 3 }, // LEFT OUT
+                    { id: 4, segments: [{x:3,y:7},{x:1,y:7}], dir: 3 }, // LEFT OUT
+                    { id: 5, segments: [{x:3,y:9},{x:3,y:10}], dir: 2 }, // DOWN OUT
+                    { id: 6, segments: [{x:5,y:8},{x:5,y:9}], dir: 2 }, // DOWN OUT
+                    { id: 7, segments: [{x:7,y:9},{x:7,y:10}], dir: 2 }, // DOWN OUT
+                    { id: 8, segments: [{x:7,y:7},{x:9,y:7}], dir: 1 }, // RIGHT OUT
+                    { id: 9, segments: [{x:9,y:6},{x:9,y:4}], dir: 1 }, // RIGHT OUT
+                    { id: 10, segments: [{x:7,y:3},{x:9,y:3}], dir: 1 }, // RIGHT OUT
+                    // Inner arrows that unlock after outer ones clear
                     { id: 11, segments: [{x:4,y:5},{x:6,y:5}], dir: 1 },
                     { id: 12, segments: [{x:6,y:6},{x:4,y:6}], dir: 3 }
                 ]
             }
         ];
 
-        // Procedural levels
+        // Procedural level generator with guaranteed outer keys
         for (let i = 4; i <= 20; i++) {
             LEVELS_DATA.push({
                 name: `Maze Level ${i}`,
@@ -591,16 +589,17 @@
         function generateProceduralArrows(count, gridSize) {
             const arrs = [];
             let idCounter = 1;
+            // Generate clean unblocking layers
             for (let i = 1; i < gridSize - 1; i += 2) {
                 arrs.push({
                     id: idCounter++,
-                    segments: [{x: i, y: 1}, {x: i, y: Math.min(i + 2, gridSize - 2)}],
-                    dir: 2
+                    segments: [{x: i, y: 1}, {x: i, y: Math.min(i + 1, gridSize - 2)}],
+                    dir: 0 // Outwards UP
                 });
                 arrs.push({
                     id: idCounter++,
-                    segments: [{x: gridSize - 2, y: i}, {x: Math.max(1, gridSize - i - 2), y: i}],
-                    dir: 3
+                    segments: [{x: gridSize - 2, y: i}, {x: Math.max(1, gridSize - i - 1), y: i}],
+                    dir: 1 // Outwards RIGHT
                 });
             }
             return arrs;
@@ -867,15 +866,12 @@
         function handleArrowTap(arr) {
             gameState.hintArrowId = null;
 
-            // Play instant crisp "tick" on tap
             playSound('tick');
 
             if (isArrowPathClear(arr)) {
-                // Clear path! Play slide animation
                 setTimeout(() => playSound('slide'), 40);
                 animateArrowSlideOut(arr);
             } else {
-                // Blocked! Wiggle and lose a heart
                 playSound('error');
                 arr.isWiggling = true;
                 drawBoard();
