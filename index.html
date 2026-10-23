@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Arrow Puzzle - Full Version</title>
+    <title>Arrow Puzzle - Level 1</title>
     <style>
         * {
             box-sizing: border-box;
@@ -12,166 +12,211 @@
         }
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #1e1b4b 0%, #312e81 100%);
+            background: #f8f9fc;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
             min-height: 100vh;
-            color: #fff;
+            color: #333;
         }
-        .game-card {
-            background: rgba(255, 255, 255, 0.05);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
+        .game-container {
+            background: #ffffff;
             padding: 24px;
             border-radius: 24px;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.08);
             text-align: center;
-            max-width: 380px;
-            width: 90%;
+            max-width: 400px;
+            width: 95%;
         }
-        .header {
-            margin-bottom: 20px;
-        }
-        .header h1 {
-            font-size: 24px;
-            color: #818cf8;
-            margin-bottom: 6px;
-        }
-        .header p {
-            font-size: 13px;
-            color: #94a3b8;
-        }
-        .stats {
+        .top-bar {
             display: flex;
-            justify-content: space-around;
+            justify-content: space-between;
+            align-items: center;
             margin-bottom: 15px;
-            font-size: 14px;
-            font-weight: bold;
-            color: #e2e8f0;
         }
+        .back-arrow, .settings-icon {
+            font-size: 20px;
+            cursor: pointer;
+            color: #4b5563;
+        }
+        .level-title {
+            font-size: 18px;
+            font-weight: bold;
+            color: #1f2937;
+        }
+        .subtitle {
+            font-size: 13px;
+            color: #f43f5e;
+            background: #ffe4e6;
+            padding: 6px 12px;
+            border-radius: 20px;
+            margin-bottom: 20px;
+            display: inline-block;
+            font-weight: 500;
+        }
+        .stats-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            background: #f1f5f9;
+            padding: 10px 16px;
+            border-radius: 12px;
+            font-weight: bold;
+            font-size: 14px;
+            color: #374151;
+        }
+        .hearts {
+            color: #f43f5e;
+            letter-spacing: 2px;
+        }
+        /* شبكة اللعبة الـ Grid */
         .grid {
             display: grid;
-            grid-template-columns: repeat(4, 70px);
-            grid-template-rows: repeat(4, 70px);
-            gap: 10px;
+            grid-template-columns: repeat(6, 50px);
+            grid-template-rows: repeat(6, 50px);
+            gap: 6px;
             justify-content: center;
             margin: 20px 0;
+            background: #f8fafc;
+            padding: 12px;
+            border-radius: 16px;
+            border: 1px solid #e2e8f0;
         }
         .cell {
-            background: rgba(255, 255, 255, 0.08);
-            border: 2px solid rgba(255, 255, 255, 0.15);
-            border-radius: 14px;
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 28px;
+            font-size: 22px;
             cursor: pointer;
-            transition: all 0.2s ease;
+            transition: all 0.15s ease;
             user-select: none;
+            color: #1e3a8a;
         }
-        .cell:hover:not(.empty) {
-            background: rgba(129, 140, 248, 0.2);
-            transform: scale(1.05);
-            border-color: #818cf8;
-        }
+        /* شكل النقطة للخلايا الفارغة تماماً مثل التصميم المطلوب */
         .cell.empty {
             background: transparent;
-            border: 2px dashed rgba(255, 255, 255, 0.05);
+            border: none;
             cursor: default;
+            position: relative;
         }
-        /* حركة الاهتزاز عند الاصطدام أو وجود عائق */
+        .cell.empty::after {
+            content: '•';
+            color: #cbd5e1;
+            font-size: 20px;
+        }
+        .cell:hover:not(.empty) {
+            background: #eff6ff;
+            border-color: #3b82f6;
+            transform: scale(1.05);
+        }
+        /* تأثير الاهتزاز عند وجود عائق */
         @keyframes shake {
             0%, 100% { transform: translateX(0); }
-            25% { transform: translateX(-6px); }
-            75% { transform: translateX(6px); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
         }
         .shake {
-            animation: shake 0.3s ease-in-out;
+            animation: shake 0.25s ease-in-out;
             border-color: #ef4444 !important;
-            background: rgba(239, 68, 68, 0.2) !important;
+            background: #ffeeef !important;
         }
-        /* حركة الطيران للخارج */
+        /* حركة الطيران عند خروج السهم */
         @keyframes flyOut {
             0% { transform: scale(1); opacity: 1; }
-            100% { transform: scale(1.5); opacity: 0; }
+            100% { transform: scale(1.4); opacity: 0; }
         }
         .fly {
-            animation: flyOut 0.3s ease-out forwards;
+            animation: flyOut 0.25s ease-out forwards;
         }
-        .btn {
-            background: #4f46e5;
+        .bottom-action {
+            margin-top: 20px;
+        }
+        .btn-clear {
+            background: #1e293b;
             color: white;
             border: none;
-            padding: 12px 24px;
-            border-radius: 12px;
-            cursor: pointer;
-            font-weight: bold;
-            font-size: 15px;
             width: 100%;
-            transition: background 0.2s;
-            box-shadow: 0 4px 12px rgba(79, 70, 229, 0.4);
-        }
-        .btn:hover {
-            background: #4338ca;
-        }
-        .win-message {
-            margin-top: 15px;
-            font-size: 18px;
-            color: #34d399;
+            padding: 14px;
+            border-radius: 14px;
+            font-size: 16px;
             font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            transition: background 0.2s;
+        }
+        .btn-clear:hover {
+            background: #0f172a;
+        }
+        .win-banner {
+            font-size: 16px;
+            color: #10b981;
+            font-weight: bold;
+            margin: 10px 0;
             display: none;
         }
     </style>
 </head>
 <body>
 
-    <div class="game-card">
-        <div class="header">
-            <h1>Arrow Puzzle</h1>
-            <p>فرّغ الأسهم التي طريقها سالك أولاً!</p>
+    <div class="game-container">
+        <!-- الشريط العلوي -->
+        <div class="top-bar">
+            <span class="back-arrow" onclick="resetGame()">←</span>
+            <div class="level-title">Level 1</div>
+            <span class="settings-icon">⚙️</span>
+        </div>
+
+        <div class="subtitle">❤️ Heart Shape! Clear outside arrows first</div>
+
+        <!-- عدادات المحاولات والقلوب -->
+        <div class="stats-bar">
+            <div>🎯 متبقي: <span id="remainingCount">0</span></div>
+            <div class="hearts">❤️❤️❤️</div>
         </div>
         
-        <div class="stats">
-            <div>المستوى: <span id="levelNum">1</span></div>
-            <div>الأسهم المتبقية: <span id="remainingCount">16</span></div>
-        </div>
-        
-        <!-- شبكة اللعبة 4x4 -->
+        <!-- شبكة اللعبة -->
         <div class="grid" id="gameGrid"></div>
         
-        <div class="win-message" id="winMsg">🎉 ممتاز! تم اجتياز المستوى بنجاح!</div>
-        
-        <button class="btn" onclick="initGame()">إعادة اللعبة 🔄</button>
+        <div class="win-banner" id="winMsg">🎉 ممتاز! تم مسح الشكل بنجاح!</div>
+
+        <!-- الزر السفلي -->
+        <div class="bottom-action">
+            <button class="btn-clear" onclick="resetGame()">إعادة المحاولة 🔄</button>
+        </div>
     </div>
 
     <script>
-        const gridSize = 4; // شبكة 4 في 4
+        const rows = 6;
+        const cols = 6;
+
+        // تصميم المستوى بحيث تكون الأسهم الخارجية سالكة ويمكن الضغط عليها للبدء
+        // null تعني نقطة فارغة، والرموز هي اتجاهات الأسهم
+        let initialBoard = [
+            [null,  '⬆️', '⬆️', '⬆️', '⬆️', null],
+            ['⬅️', null,  null,  null,  null,  '➡️'],
+            ['⬅️', null,  '⬆️', '➡️', null,  '➡️'],
+            ['⬅️', null,  '⬇️', '⬅️', null,  '➡️'],
+            ['⬅️', null,  null,  null,  null,  '➡️'],
+            [null,  '⬇️', '⬇️', '⬇️', '⬇️', null]
+        ];
+
         let board = [];
 
-        // اتجاهات الأسهم: الرمز والـ Delta (dx, dy)
-        const arrowTypes = {
-            '⬆️': { dx: 0, dy: -1 },
-            '⬇️': { dx: 0, dy: 1 },
-            '⬅️': { dx: -1, dy: 0 },
-            '➡️': { dx: 1, dy: 0 }
+        const directions = {
+            '⬆️': { dr: -1, dc: 0 },
+            '⬇️': { dr: 1, dc: 0 },
+            '⬅️': { dr: 0, dc: -1 },
+            '➡️': { dr: 0, dc: 1 }
         };
 
-        const symbols = ['⬆️', '⬇️', '⬅️', '➡️'];
-
-        function initGame() {
-            // توليد شبكة عشوائية مبدئية
-            board = [];
-            for (let r = 0; r < gridSize; r++) {
-                let row = [];
-                for (let c = 0; c < gridSize; c++) {
-                    const randomSymbol = symbols[Math.floor(Math.random() * symbols.length)];
-                    row.push(randomSymbol);
-                }
-                board.push(row);
-            }
-            
+        function resetGame() {
+            // نسخ مصفوفة المستوى الأصلي
+            board = initialBoard.map(row => [...row]);
             document.getElementById('winMsg').style.display = 'none';
             renderBoard();
         }
@@ -182,8 +227,8 @@
             gridElement.innerHTML = '';
             let activeCount = 0;
 
-            for (let r = 0; r < gridSize; r++) {
-                for (let c = 0; c < gridSize; c++) {
+            for (let r = 0; r < rows; r++) {
+                for (let c = 0; c < cols; c++) {
                     const cellDiv = document.createElement('div');
                     cellDiv.classList.add('cell');
                     
@@ -201,7 +246,6 @@
 
             document.getElementById('remainingCount').innerText = activeCount;
 
-            // لو خلصت كل الأسهم
             if (activeCount === 0) {
                 document.getElementById('winMsg').style.display = 'block';
             }
@@ -211,42 +255,42 @@
             const arrow = board[r][c];
             if (!arrow) return;
 
-            const { dx, dy } = arrowTypes[arrow];
-            let currR = r + dy;
-            let currC = c + dx;
+            const { dr, dc } = directions[arrow];
+            let currR = r + dr;
+            let currC = c + dc;
             let isPathClear = true;
 
-            // فحص المسار خطوة بخطوة لحد ما يخرج بره الشبكة
-            while (currR >= 0 && currR < gridSize && currC >= 0 && currC < gridSize) {
+            // فحص المسار في اتجاه السهم حتى الخروج من حدود الشبكة
+            while (currR >= 0 && currR < rows && currC >= 0 && currC < cols) {
                 if (board[currR][currC] !== null) {
                     isPathClear = false;
                     break;
                 }
-                currR += dy;
-                currC += dx;
+                currR += dr;
+                currC += dc;
             }
 
-            const cellIndex = r * gridSize + c;
+            const cellIndex = r * cols + c;
             const cellElement = gridElement.children[cellIndex];
 
             if (isPathClear) {
-                // الطريق سالك: مسح السهم وتحريكه للخارج
+                // الطريق سالك: يطير السهم ويختفي
                 cellElement.classList.add('fly');
                 setTimeout(() => {
                     board[r][c] = null;
                     renderBoard();
-                }, 300);
+                }, 250);
             } else {
-                // الطريق مسدود: اهتزاز السهم
+                // الطريق مسدود: يهتز باللون الأحمر
                 cellElement.classList.add('shake');
                 setTimeout(() => {
                     cellElement.classList.remove('shake');
-                }, 300);
+                }, 250);
             }
         }
 
-        // بدء اللعبة لأول مرة
-        initGame();
+        // تشغيل اللعبة
+        resetGame();
     </script>
 
 </body>
