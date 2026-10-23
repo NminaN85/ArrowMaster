@@ -2,7 +2,7 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Meowdoku - Cat Queens Puzzle</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -29,140 +29,153 @@
             touch-action: manipulation;
         }
 
-        /* أنيميشن عند وضع القطة */
         @keyframes popIn {
             0% { transform: scale(0); opacity: 0; }
-            80% { transform: scale(1.2); }
+            80% { transform: scale(1.25); }
             100% { transform: scale(1); opacity: 1; }
         }
         .animate-pop {
-            animation: popIn 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+            animation: popIn 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
         }
 
-        /* أنيميشن الاهتزاز عند تعارض القواعد */
         @keyframes shake {
             0%, 100% { transform: translateX(0); }
-            20%, 60% { transform: translateX(-4px); }
-            40%, 80% { transform: translateX(4px); }
+            20%, 60% { transform: translateX(-5px); }
+            40%, 80% { transform: translateX(5px); }
         }
         .animate-shake {
             animation: shake 0.3s ease-in-out;
+            border-color: #ef4444 !important;
         }
     </style>
 </head>
-<body class="bg-slate-900 text-slate-100 min-h-screen flex flex-col items-center justify-between p-4 selection:bg-rose-500 selection:text-white">
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col items-center justify-between p-4 selection:bg-rose-500 selection:text-white">
 
-    <!-- الشريط العلوي HEADER -->
+    <!-- HEADER -->
     <header class="w-full max-w-md flex items-center justify-between py-2 border-b border-slate-800">
         <div class="flex items-center gap-2">
-            <span class="text-2xl">🐱</span>
-            <h1 class="text-2xl font-bold tracking-wide text-transparent bg-clip-text bg-gradient-to-r from-pink-400 via-rose-400 to-amber-400">
+            <span class="text-3xl">🐱</span>
+            <h1 class="text-2xl font-black tracking-wide text-transparent bg-clip-text bg-gradient-to-r from-pink-400 via-rose-400 to-amber-400">
                 MEOWDOKU
             </h1>
         </div>
         <div class="flex items-center gap-2">
-            <button onclick="toggleSound()" id="sound-btn" class="w-9 h-9 rounded-full bg-slate-800 hover:bg-slate-700 flex items-center justify-center text-rose-400 transition">
+            <button onclick="toggleSound()" id="sound-btn" class="w-10 h-10 rounded-full bg-slate-900 border border-slate-800 hover:bg-slate-800 flex items-center justify-center text-rose-400 transition">
                 <i class="fa-solid fa-volume-high"></i>
             </button>
-            <button onclick="resetBoard()" class="w-9 h-9 rounded-full bg-slate-800 hover:bg-slate-700 flex items-center justify-center text-amber-400 transition" title="إعادة المحاولة">
+            <button onclick="resetBoard()" class="w-10 h-10 rounded-full bg-slate-900 border border-slate-800 hover:bg-slate-800 flex items-center justify-center text-amber-400 transition" title="إعادة المحاولة">
                 <i class="fa-solid fa-rotate-right"></i>
             </button>
         </div>
     </header>
 
-    <!-- المحتوى الرئيسي MAIN -->
-    <main class="w-full max-w-md flex-1 flex flex-col items-center justify-center gap-4 my-auto py-2">
+    <!-- MAIN GAME AREA -->
+    <main class="w-full max-w-md flex-1 flex flex-col items-center justify-center gap-3 my-auto py-2">
 
-        <!-- شريط الإحصائيات والمعلومات -->
-        <div class="w-full bg-slate-800/80 border border-slate-700/60 rounded-2xl p-3 flex items-center justify-between shadow-lg">
+        <!-- STATS & LEVEL HEADER -->
+        <div class="w-full bg-slate-900/90 border border-slate-800 rounded-2xl p-3 flex items-center justify-between shadow-xl">
             <div>
-                <span class="text-xs text-slate-400 font-semibold block">المستوى</span>
-                <span id="level-title" class="text-lg font-bold text-amber-400">Level 1 (5x5)</span>
+                <span class="text-[11px] text-slate-400 font-bold block uppercase tracking-wider">المستوى الحالي</span>
+                <span id="level-title" class="text-lg font-black text-amber-400">Level 1 (5x5)</span>
             </div>
             <div class="flex gap-1.5" id="cat-counter">
-                <!-- يتم توليد أيقونات القطط المطلوبة هنا -->
+                <!-- أيقونات القلوب/القطط -->
             </div>
         </div>
 
-        <!-- صندوق التعليمات السريعة -->
-        <div class="w-full bg-rose-500/10 border border-rose-500/20 text-rose-300 rounded-xl px-3 py-2 text-xs text-center font-semibold flex items-center justify-center gap-2">
-            <span>💡 ضغطة = ❌ للاستبعاد | ضغطتان = 🐱 وضع القطة</span>
+        <!-- HINT TOAST -->
+        <div class="w-full bg-rose-500/10 border border-rose-500/20 text-rose-300 rounded-xl px-3 py-2 text-xs text-center font-bold flex items-center justify-center gap-2">
+            <span>💡 قطة واحدة لكل صف، عمود، ومنطقة لونية دون تلامس!</span>
         </div>
 
-        <!-- شبكة اللعبة GRID -->
-        <div id="grid-container" class="relative w-full aspect-square max-w-[360px] bg-slate-800/50 p-2.5 rounded-2xl border border-slate-700/80 shadow-2xl grid gap-1.5">
-            <!-- الخلايا يتم توليدها بواسطة JavaScript -->
+        <!-- PUZZLE GRID CONTAINER -->
+        <div id="grid-container" class="relative w-full aspect-square max-w-[360px] bg-slate-900 p-2.5 rounded-2xl border border-slate-800 shadow-2xl grid gap-1.5">
+            <!-- الخلايا يتم توليدها هنا -->
         </div>
 
-        <!-- أزرار اختيار الأوضاع والتحكم -->
-        <div class="flex items-center justify-center gap-3 w-full">
-            <button onclick="setTapMode('auto')" id="mode-auto" class="flex-1 py-2.5 px-3 rounded-xl bg-rose-500 text-slate-950 font-bold text-xs shadow-lg shadow-rose-500/20 transition flex items-center justify-center gap-1.5">
-                <span>🔄 وضع تلقائي (❌ ⬅️ 🐱)</span>
+        <!-- ACTION BUTTONS -->
+        <div class="flex items-center justify-center gap-2 w-full">
+            <button onclick="clearCrosses()" class="flex-1 py-3 px-3 rounded-xl bg-slate-900 border border-slate-800 text-slate-300 font-bold text-xs hover:bg-slate-800 transition">
+                مسح كل الـ ❌
+            </button>
+            <button onclick="resetBoard()" class="flex-1 py-3 px-3 rounded-xl bg-rose-500 text-slate-950 font-black text-xs shadow-lg shadow-rose-500/20 hover:bg-rose-600 transition">
+                إعادة المستوى 🔄
             </button>
         </div>
 
     </main>
 
-    <!-- نافذة الفوز WIN MODAL -->
-    <div id="win-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 flex items-center justify-center p-4 hidden">
+    <!-- WIN MODAL -->
+    <div id="win-modal" class="fixed inset-0 bg-slate-950/85 backdrop-blur-md z-50 flex items-center justify-center p-4 hidden">
         <div class="bg-slate-900 border border-slate-800 w-full max-w-xs rounded-2xl p-6 text-center flex flex-col items-center gap-4 shadow-2xl animate-pop">
-            <div class="w-16 h-16 rounded-full bg-rose-500/10 border border-rose-500/30 text-rose-400 flex items-center justify-center text-3xl">
+            <div class="w-20 h-20 rounded-full bg-rose-500/10 border-2 border-rose-500/30 text-rose-400 flex items-center justify-center text-4xl shadow-inner">
                 🐱
             </div>
-            <h2 class="text-2xl font-bold text-amber-400">ممتاز جداً! 🎉</h2>
-            <p class="text-xs text-slate-300">لقد قمت بتوزيع القطط بنجاح دون أي تعارض!</p>
+            <h2 class="text-2xl font-black text-amber-400">فوز رائع! 🎉</h2>
+            <p class="text-xs text-slate-300 font-medium">لقد قمت بحل اللغز وتوزيع القطط بنجاح دون أي تعارض!</p>
 
-            <button onclick="nextLevel()" class="w-full py-3 bg-gradient-to-r from-rose-500 to-amber-500 text-slate-950 font-bold text-sm rounded-xl shadow-lg hover:opacity-90 transition">
+            <button onclick="nextLevel()" class="w-full py-3.5 bg-gradient-to-r from-rose-500 to-amber-500 text-slate-950 font-black text-sm rounded-xl shadow-lg hover:opacity-90 transition active:scale-95">
                 المستوى التالي ➡️
             </button>
         </div>
     </div>
 
-    <!-- برمجة منطق اللعبة JAVASCRIPT -->
+    <!-- GAME LOGIC SCRIPT -->
     <script>
         /* ===================================================
-           1. الأصوات (Web Audio API)
+           1. AUDIO ENGINE (FIXED FOR MOBILE / IOS SAFARI)
            =================================================== */
-        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        let audioCtx = null;
         let soundEnabled = true;
+
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+        }
 
         function playSound(type) {
             if (!soundEnabled) return;
             try {
-                if (audioCtx.state === 'suspended') audioCtx.resume();
+                initAudio();
                 const osc = audioCtx.createOscillator();
                 const gain = audioCtx.createGain();
                 osc.connect(gain);
                 gain.connect(audioCtx.destination);
                 const now = audioCtx.currentTime;
 
-                if (type === 'cross') { // صوت وضع ❌
+                if (type === 'cross') {
                     osc.type = 'sine';
-                    osc.frequency.setValueAtTime(400, now);
-                    gain.gain.setValueAtTime(0.1, now);
+                    osc.frequency.setValueAtTime(500, now);
+                    gain.gain.setValueAtTime(0.12, now);
                     gain.gain.exponentialRampToValueAtTime(0.01, now + 0.05);
                     osc.start(now);
                     osc.stop(now + 0.05);
-                } else if (type === 'cat') { // صوت "مياو" عند وضع القطة
+                } else if (type === 'cat') {
+                    // صوت مياو خفيف
                     osc.type = 'triangle';
-                    osc.frequency.setValueAtTime(600, now);
-                    osc.frequency.exponentialRampToValueAtTime(900, now + 0.12);
-                    gain.gain.setValueAtTime(0.2, now);
+                    osc.frequency.setValueAtTime(550, now);
+                    osc.frequency.exponentialRampToValueAtTime(880, now + 0.15);
+                    gain.gain.setValueAtTime(0.25, now);
                     gain.gain.exponentialRampToValueAtTime(0.01, now + 0.25);
                     osc.start(now);
                     osc.stop(now + 0.25);
-                } else if (type === 'win') { // صوت الفوز
+                } else if (type === 'win') {
+                    // نغمة الفوز
                     osc.type = 'triangle';
                     osc.frequency.setValueAtTime(523.25, now);
                     osc.frequency.setValueAtTime(659.25, now + 0.1);
                     osc.frequency.setValueAtTime(783.99, now + 0.2);
-                    gain.gain.setValueAtTime(0.2, now);
-                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.4);
+                    gain.gain.setValueAtTime(0.3, now);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.45);
                     osc.start(now);
-                    osc.stop(now + 0.4);
-                } else if (type === 'clear') { // صوت المسح
+                    osc.stop(now + 0.45);
+                } else if (type === 'clear') {
                     osc.type = 'sine';
-                    osc.frequency.setValueAtTime(300, now);
+                    osc.frequency.setValueAtTime(320, now);
                     gain.gain.setValueAtTime(0.08, now);
                     gain.gain.exponentialRampToValueAtTime(0.01, now + 0.04);
                     osc.start(now);
@@ -179,24 +192,22 @@
         }
 
         /* ===================================================
-           2. بيانات المستويات والمناطق الملونة
+           2. LEVEL DEFINITIONS & REGION COLORS
            =================================================== */
-        // ألوان المناطق الملونة في الشبكة
         const REGION_COLORS = [
-            '#f43f5e', // Rose
-            '#3b82f6', // Blue
-            '#10b981', // Emerald
-            '#f59e0b', // Amber
-            '#8b5cf6', // Purple
-            '#06b6d4', // Cyan
-            '#ec4899', // Pink
+            '#e11d48', // Red/Rose
+            '#2563eb', // Blue
+            '#059669', // Emerald
+            '#d97706', // Amber
+            '#7c3aed', // Violet
+            '#0891b2', // Cyan
+            '#db2777', // Pink
         ];
 
         const LEVELS = [
-            // Level 1: 5x5
+            // Level 1: 5x5 (Solvable Queens Puzzle)
             {
                 size: 5,
-                // مصفوفة تُحدد معرف المنطقة (Region ID) لكل خلية
                 regions: [
                     [0, 0, 1, 1, 1],
                     [0, 2, 2, 1, 3],
@@ -231,10 +242,10 @@
         ];
 
         let currentLevelIdx = 0;
-        let gridState = []; // تخزين حالة كل خلية (0: فارغ, 1: ❌, 2: 🐱)
+        let gridState = []; // 0: empty, 1: ❌, 2: 🐱
 
         /* ===================================================
-           3. بناء اللعبة والرسم
+           3. BOARD RENDER & GAME LOGIC
            =================================================== */
         function initLevel(levelIdx) {
             currentLevelIdx = levelIdx;
@@ -246,14 +257,14 @@
             document.getElementById('level-title').innerText = `Level ${currentLevelIdx + 1} (${size}x${size})`;
             document.getElementById('win-modal').classList.add('hidden');
 
-            // تحديث العداد العلوي للقطط
+            // Header Cat Counter
             const counterEl = document.getElementById('cat-counter');
             counterEl.innerHTML = '';
             for (let i = 0; i < size; i++) {
-                counterEl.innerHTML += `<span id="cat-badge-${i}" class="text-xl opacity-30 transition-opacity">🐱</span>`;
+                counterEl.innerHTML += `<span id="cat-badge-${i}" class="text-xl opacity-25 transition-opacity">🐱</span>`;
             }
 
-            // بناء شبكة الخلايا
+            // Grid Cells
             const container = document.getElementById('grid-container');
             container.style.gridTemplateColumns = `repeat(${size}, minmax(0, 1fr))`;
             container.style.gridTemplateRows = `repeat(${size}, minmax(0, 1fr))`;
@@ -266,9 +277,9 @@
 
                     const cell = document.createElement('div');
                     cell.id = `cell-${r}-${c}`;
-                    cell.className = 'relative flex items-center justify-center rounded-xl cursor-pointer font-bold text-xl transition-all select-none border border-black/20';
+                    cell.className = 'relative flex items-center justify-center rounded-xl cursor-pointer font-bold text-xl transition-all select-none border border-black/20 shadow-sm';
                     cell.style.backgroundColor = color;
-                    cell.style.opacity = '0.85';
+                    cell.style.opacity = '0.9';
 
                     cell.onclick = () => handleCellTap(r, c);
 
@@ -277,47 +288,75 @@
             }
         }
 
-        /* ===================================================
-           4. منطق الضغط والتحقق من القواعد
-           =================================================== */
         function handleCellTap(r, c) {
+            initAudio(); // تفعيل الصوت فور الضغط
             const currentState = gridState[r][c];
-            // التبديل الدوري: فارغ (0) ⬅️ ❌ (1) ⬅️ 🐱 (2) ⬅️ فارغ (0)
             const nextState = (currentState + 1) % 3;
 
             gridState[r][c] = nextState;
-            updateCellUI(r, c);
+
+            // إذا وضع القطة، نقوم بوضع ❌ تلقائياً في الصف والعمود والأجوار المستحيلة
+            if (nextState === 2) {
+                autoFillCrosses(r, c);
+            }
+
+            renderGridUI();
 
             if (nextState === 1) playSound('cross');
             else if (nextState === 2) playSound('cat');
             else playSound('clear');
 
-            validateGrid();
+            validateAndCheckWin();
         }
 
-        function updateCellUI(r, c) {
-            const cell = document.getElementById(`cell-${r}-${c}`);
-            const state = gridState[r][c];
+        // دالة وضع الـ ❌ تلقائياً عند وضع القطة لتسهيل وتنسيق اللعبة
+        function autoFillCrosses(r, c) {
+            const level = LEVELS[currentLevelIdx];
+            const size = level.size;
 
-            cell.classList.remove('animate-shake');
+            for (let i = 0; i < size; i++) {
+                for (let j = 0; j < size; j++) {
+                    if (i === r && j === c) continue;
 
-            if (state === 0) {
-                cell.innerHTML = '';
-            } else if (state === 1) {
-                cell.innerHTML = `<span class="text-slate-900/40 text-lg">❌</span>`;
-            } else if (state === 2) {
-                cell.innerHTML = `<span class="animate-pop text-2xl">🐱</span>`;
+                    const sameRow = (i === r);
+                    const sameCol = (j === c);
+                    const sameRegion = (level.regions[i][j] === level.regions[r][c]);
+                    const isAdjacent = Math.abs(i - r) <= 1 && Math.abs(j - c) <= 1;
+
+                    if ((sameRow || sameCol || sameRegion || isAdjacent) && gridState[i][j] === 0) {
+                        gridState[i][j] = 1;
+                    }
+                }
             }
         }
 
-        function validateGrid() {
+        function renderGridUI() {
+            const level = LEVELS[currentLevelIdx];
+            const size = level.size;
+
+            for (let r = 0; r < size; r++) {
+                for (let c = 0; c < size; c++) {
+                    const cell = document.getElementById(`cell-${r}-${c}`);
+                    const state = gridState[r][c];
+                    cell.classList.remove('animate-shake');
+
+                    if (state === 0) {
+                        cell.innerHTML = '';
+                    } else if (state === 1) {
+                        cell.innerHTML = `<span class="text-slate-950/40 text-base font-black">❌</span>`;
+                    } else if (state === 2) {
+                        cell.innerHTML = `<span class="animate-pop text-2xl filter drop-shadow-md">🐱</span>`;
+                    }
+                }
+            }
+        }
+
+        function validateAndCheckWin() {
             const level = LEVELS[currentLevelIdx];
             const size = level.size;
 
             let catLocations = [];
-            let isValid = true;
 
-            // جمع مواقع القطط
             for (let r = 0; r < size; r++) {
                 for (let c = 0; c < size; c++) {
                     if (gridState[r][c] === 2) {
@@ -326,51 +365,60 @@
                 }
             }
 
-            // تحديث شريط القطط العلوية
+            // تحديث عداد القطط العلوي
             for (let i = 0; i < size; i++) {
                 const badge = document.getElementById(`cat-badge-${i}`);
-                if (i < catLocations.length) badge.classList.remove('opacity-30');
-                else badge.classList.add('opacity-30');
+                if (i < catLocations.length) badge.classList.remove('opacity-25');
+                else badge.classList.add('opacity-25');
             }
 
             // فحص التعارضات
             let invalidCells = new Set();
+            let hasConflict = false;
 
             for (let i = 0; i < catLocations.length; i++) {
                 for (let j = i + 1; j < catLocations.length; j++) {
                     const c1 = catLocations[i];
                     const c2 = catLocations[j];
 
-                    // 1. نفس الصف
                     const sameRow = c1.r === c2.r;
-                    // 2. نفس العمود
                     const sameCol = c1.c === c2.c;
-                    // 3. نفس المنطقة الملونة
                     const sameRegion = c1.region === c2.region;
-                    // 4. التلامس المباشر أو القطري (Diagonal Adjacent)
-                    const isAdjacent = Math.abs(c1.r - c2.r) <= 1 && Math.abs(c1.c - c2.c) <= 1;
+                    const isAdjacent = Math.abs(c1.r - c2.r) <= 1 && Math.abs(c1.c - c2.c) <= 1; // يشمل الأقطار
 
                     if (sameRow || sameCol || sameRegion || isAdjacent) {
-                        isValid = false;
+                        hasConflict = true;
                         invalidCells.add(`${c1.r}-${c1.c}`);
                         invalidCells.add(`${c2.r}-${c2.c}`);
                     }
                 }
             }
 
-            // تمييز الخلايا المتعارة بصرياً
+            // الاهتزاز عند وجود تعارض
             invalidCells.forEach(key => {
                 const el = document.getElementById(`cell-${key}`);
                 if (el) el.classList.add('animate-shake');
             });
 
-            // شرط الفوز: عدد القطط يطابق حجم الشبكة وبدون أي تعارض
-            if (catLocations.length === size && isValid) {
+            // شرط الفوز الصريح
+            if (catLocations.length === size && !hasConflict) {
                 playSound('win');
                 setTimeout(() => {
                     document.getElementById('win-modal').classList.remove('hidden');
-                }, 300);
+                }, 250);
             }
+        }
+
+        function clearCrosses() {
+            const level = LEVELS[currentLevelIdx];
+            for (let r = 0; r < level.size; r++) {
+                for (let c = 0; c < level.size; c++) {
+                    if (gridState[r][c] === 1) gridState[r][c] = 0;
+                }
+            }
+            playSound('clear');
+            renderGridUI();
+            validateAndCheckWin();
         }
 
         function resetBoard() {
@@ -382,7 +430,6 @@
             initLevel(nextIdx);
         }
 
-        // تشغيل اللعبة فور تحميل الصفحة
         window.onload = () => initLevel(0);
     </script>
 </body>
